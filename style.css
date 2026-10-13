@@ -32,12 +32,22 @@ button:focus-visible { outline: 2px solid var(--pink); outline-offset: 4px; }
 .note-slot--7 { --angle: -58deg; left: -74px; top: 208px; width: 112px; height: 224px; z-index: 6; }
 .note-slot--8 { --angle: 58deg; --note-tint: hue-rotate(100deg); right: -72px; top: 221px; width: 110px; height: 220px; z-index: 6; }
 .note-trigger { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; transition: transform 140ms var(--ease-out); }
-.note-trigger::before, .note-face::before { content: ""; position: absolute; inset: 0; background: url("assets/birthday-note-v2.png") center / contain no-repeat; filter: var(--note-tint, none); pointer-events: none; }
 .note-trigger:active { transform: translateY(3px); }
-.note-content { position: absolute; top: 25%; left: 50%; display: flex; align-items: flex-start; gap: 7px; transform: translateX(-50%); pointer-events: none; }
-.note-label { display: block; writing-mode: vertical-rl; text-orientation: upright; font: 600 19px/1.28 var(--hand); letter-spacing: .08em; white-space: nowrap; }
-.note-small { display: block; margin-top: 10px; writing-mode: vertical-rl; text-orientation: upright; color: #876750; font: 10px/1.35 var(--hand); letter-spacing: .08em; white-space: nowrap; }
-.note-slot--7 .note-small, .note-slot--8 .note-small { font-size: 9px; }
+.paper-note { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; --title-size: 19px; --caption-size: 14px; }
+.note-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.note-front { transform: rotateY(0deg) translateZ(.6px); }
+.note-back { transform: rotateY(180deg) translateZ(.6px); }
+.note-paper { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; filter: var(--note-tint, none); pointer-events: none; }
+/* Keep the writing inside the illustrated paper, clear of tape, doodles and fold.
+   These percentages scale with the whole note before its parent rotates it. */
+.note-writing { position: absolute; inset: 18% 16% 18%; overflow: hidden; }
+.note-content { display: flex; width: 100%; height: 100%; justify-content: center; align-items: flex-start; gap: 12px; pointer-events: none; }
+.note-label { display: block; flex: 0 0 auto; margin: 0; writing-mode: vertical-rl; text-orientation: upright; font: 600 var(--title-size)/1.25 var(--hand); letter-spacing: .04em; white-space: nowrap; }
+.note-small { display: none; flex: 0 0 auto; margin: 14px 0 0; writing-mode: vertical-rl; text-orientation: upright; color: var(--muted); font: var(--caption-size)/1.4 var(--hand); letter-spacing: .04em; white-space: nowrap; }
+.paper-note--expanded { --title-size: 38px; }
+.paper-note--expanded .note-small { display: block; }
+.paper-note--expanded .note-paper { filter: var(--note-tint, none) drop-shadow(0 8px 7px rgba(64, 37, 25, .12)); }
+.note-writing--back { display: flex; align-items: center; }
 .note-trigger.is-seen .note-label { color: var(--pink); }
 .birthday-center { position: absolute; top: 67%; left: 50%; width: min(100% - 48px, 320px); transform: translate(-50%, -50%); text-align: center; }
 .birthday-cake { display: block; width: 264px; height: 264px; margin: 0 auto 14px; object-fit: contain; }
@@ -55,17 +65,9 @@ h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacin
 #note-flight:focus-visible { outline: 2px dashed var(--pink); outline-offset: 8px; border-radius: 10px; }
 #note-dialog[data-state="dragging"] #note-flight { cursor: grabbing; }
 #note-flipper { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateY(0deg); }
-.note-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 34px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.note-face > * { position: relative; }
-.note-face::before { filter: var(--note-tint, none) drop-shadow(0 8px 7px rgba(64, 37, 25, .12)); }
-.note-front { transform: rotateY(0deg) translateZ(.6px); }
-.note-back { transform: rotateY(180deg) translateZ(.6px); }
-.front-content { display: flex; align-items: flex-start; justify-content: center; gap: 18px; }
-#note-front-text { margin: 0; writing-mode: vertical-rl; text-orientation: upright; font: 600 30px/1.5 var(--hand); letter-spacing: .12em; white-space: nowrap; }
-#note-front-small { margin: 18px 0 0; writing-mode: vertical-rl; text-orientation: upright; color: var(--muted); font: 14px/1.5 var(--hand); letter-spacing: .1em; }
-.back-content { width: 100%; max-height: 90%; overflow-y: auto; scrollbar-width: thin; }
+.back-content { width: 100%; max-height: 100%; overflow-y: auto; scrollbar-width: thin; }
 .back-eyebrow { margin: 0 0 22px; text-align: center; color: var(--pink); font: 14px/1.4 var(--hand); letter-spacing: .12em; }
-#note-back-text { margin: 0; font: 18px/1.85 var(--hand); white-space: pre-line; overflow-wrap: normal; }
+.note-back-text { margin: 0; font: 18px/1.85 var(--hand); white-space: pre-line; overflow-wrap: normal; }
 .back-signature { margin: 26px 0 0; color: var(--muted); font: 12px/1.5 var(--hand); text-align: right; }
 .note-gesture-hint { position: absolute; top: calc(100% + 14px); left: 50%; margin: 0; padding: 5px 12px; border-radius: 999px; background: var(--paper); transform: translateX(-50%); color: var(--ink); font: 12px/1.5 var(--hand); letter-spacing: .04em; white-space: nowrap; }
 .note-actions { position: absolute; top: calc(100% + 54px); left: 50%; display: flex; transform: translateX(-50%); white-space: nowrap; }
@@ -88,20 +90,17 @@ h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacin
   .note-slot--6 { top: 65px; }
   .note-slot--7 { top: 135px; width: 104px; height: 208px; }
   .note-slot--8 { top: 140px; width: 104px; height: 208px; }
-  .note-label { font-size: 17px; }
-  .note-small { font-size: 9px; }
-  .note-face { padding: 30px; }
-  #note-back-text { font-size: 17px; }
+  .note-trigger .paper-note { --title-size: 17px; }
+  .note-back-text { font-size: 17px; }
   .birthday-cake { width: 214px; height: 214px; }
 }
 @media (min-width: 700px) {
   .scene { height: max(780px, 100svh); }
 }
 @media (max-height: 650px) {
-  .note-face { padding: 28px 22px; }
-  #note-back-text { font-size: 16px; line-height: 1.75; }
-  .back-eyebrow { margin-bottom: 16px; font-size: 13px; }
-  .back-signature { margin-top: 18px; font-size: 11px; }
+  .note-back-text { font-size: 15px; line-height: 1.7; }
+  .back-eyebrow { margin-bottom: 12px; font-size: 12px; }
+  .back-signature { margin-top: 14px; font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .note-trigger { transition: none; }

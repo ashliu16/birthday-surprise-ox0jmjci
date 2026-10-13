@@ -8,8 +8,8 @@
   <meta name="theme-color" content="#fff8e9">
   <title>给你的生日惊喜</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=birthday-notes-3">
-  <script src="script.js?v=birthday-notes-3" defer></script>
+  <link rel="stylesheet" href="style.css?v=birthday-notes-4">
+  <script src="script.js?v=birthday-notes-4" defer></script>
 </head>
 <body>
   <main class="scene" aria-label="为你准备的生日惊喜">
@@ -48,20 +48,31 @@
     <span id="note-count" class="visually-hidden" role="status" aria-live="polite"></span>
     <noscript><p class="no-script-wish">愿你新的一岁，有热爱的事，有相伴的人，也有属于自己的快乐。</p></noscript>
   </main>
+  <template id="paper-note-template">
+    <div class="paper-note">
+      <div class="note-face note-front">
+        <img class="note-paper" src="assets/birthday-note-v2.png" width="887" height="1774" alt="" draggable="false" decoding="async">
+        <div class="note-writing note-writing--front">
+          <div class="note-content"><span class="note-label"></span><span class="note-small"></span></div>
+        </div>
+      </div>
+      <div class="note-face note-back" aria-hidden="true">
+        <img class="note-paper" src="assets/birthday-note-v2.png" width="887" height="1774" alt="" draggable="false" decoding="async">
+        <div class="note-writing note-writing--back">
+          <div class="back-content">
+            <p class="back-eyebrow">偷偷告诉你</p>
+            <p class="note-back-text"></p>
+            <p class="back-signature">一份小小的偏爱</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
   <dialog id="note-dialog" aria-describedby="note-front-text note-gesture-hint">
     <button id="note-dimmer" class="note-dimmer" type="button" tabindex="-1" aria-label="关闭当前纸条"></button>
     <div class="note-stage">
       <div id="note-flight" tabindex="0" role="group" aria-label="祝福纸条，左右拖动或按左右方向键翻面" aria-describedby="note-gesture-hint">
-        <div id="note-flipper">
-          <div class="note-face note-front"><div class="front-content"><h2 id="note-front-text"></h2><p id="note-front-small"></p></div></div>
-          <div class="note-face note-back" aria-hidden="true">
-            <div class="back-content">
-              <p class="back-eyebrow">偷偷告诉你</p>
-              <p id="note-back-text"></p>
-              <p class="back-signature">一份小小的偏爱</p>
-            </div>
-          </div>
-        </div>
+        <div id="note-flipper" class="paper-note paper-note--expanded"></div>
       </div>
       <p id="note-gesture-hint" class="note-gesture-hint" role="status">左右拖动纸条，翻到背面</p>
       <div class="note-actions">

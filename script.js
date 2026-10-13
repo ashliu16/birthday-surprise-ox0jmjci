@@ -6,17 +6,17 @@
     const dialog = document.getElementById('note-dialog');
     const flight = document.getElementById('note-flight');
     const flipper = document.getElementById('note-flipper');
-    const frontFace = dialog?.querySelector('.note-front');
-    const backFace = dialog?.querySelector('.note-back');
-    const frontText = document.getElementById('note-front-text');
-    const frontSmall = document.getElementById('note-front-small');
-    const backText = document.getElementById('note-back-text');
+    const noteTemplate = document.getElementById('paper-note-template');
+    let frontFace;
+    let backFace;
+    let frontText;
+    let frontSmall;
+    let backText;
     const closeButton = document.getElementById('note-close');
     const hint = document.getElementById('note-gesture-hint');
     const dimmer = document.getElementById('note-dimmer');
     const count = document.getElementById('note-count');
-    if (!grid || !dialog || !flight || !flipper || !frontFace || !backFace ||
-        !frontText || !frontSmall || !backText || !closeButton || !hint) return;
+    if (!grid || !dialog || !flight || !flipper || !noteTemplate || !closeButton || !hint) return;
 
     const triggers = [...grid.querySelectorAll('button.note-trigger[data-note-id]')];
     const messages = [
@@ -33,8 +33,13 @@
     triggers.forEach((trigger, index) => {
       const message = messages[index % messages.length];
       messageById.set(trigger.dataset.noteId, message);
-      const label = trigger.querySelector('.note-label');
-      if (label) label.textContent = message[0];
+      const caption = trigger.querySelector('.note-small')?.textContent || '';
+      const paper = noteTemplate.content.firstElementChild.cloneNode(true);
+      paper.querySelector('.note-label').textContent = message[0];
+      paper.querySelector('.note-small').textContent = caption;
+      paper.querySelector('.note-back-text').textContent = message[1];
+      trigger.replaceChildren(paper);
+      fitFrontWriting(paper.querySelector('.note-writing--front'));
       trigger.setAttribute('aria-label', message[0]);
       trigger.setAttribute('aria-controls', 'note-dialog');
       trigger.setAttribute('aria-expanded', 'false');
@@ -57,6 +62,37 @@
     let angularVelocity = 0;
     let pointer = null;
     let spring = null;
+
+    function fitFrontWriting(writing) {
+      if (!writing || writing.clientHeight < 1 || writing.clientWidth < 1) return;
+      const title = writing.querySelector('.note-label');
+      const caption = writing.querySelector('.note-small');
+      const tokens = getComputedStyle(writing);
+      const titleMax = Number.parseFloat(tokens.getPropertyValue('--title-size')) || 19;
+      const captionMax = Number.parseFloat(tokens.getPropertyValue('--caption-size')) || 14;
+      title.style.fontSize = `${titleMax}px`;
+      caption.style.fontSize = `${captionMax}px`;
+      const height = writing.clientHeight - 2;
+      const captionVisible = getComputedStyle(caption).display !== 'none';
+      const captionMargin = captionVisible ? Number.parseFloat(getComputedStyle(caption).marginTop) || 0 : 0;
+      const gap = captionVisible ? Number.parseFloat(getComputedStyle(title.parentElement).columnGap) || 0 : 0;
+      const width = title.offsetWidth + (captionVisible ? caption.offsetWidth + gap : 0);
+      const ratio = Math.min(1, height / Math.max(title.scrollHeight, 1),
+        captionVisible ? (height - captionMargin) / Math.max(caption.scrollHeight, 1) : 1,
+        (writing.clientWidth - 2) / Math.max(width, 1));
+      title.style.fontSize = `${Math.floor(titleMax * ratio * 4) / 4}px`;
+      caption.style.fontSize = `${Math.floor(captionMax * ratio * 4) / 4}px`;
+      // Account for fractional font metrics across Android, iOS and desktop fonts.
+      while (title.scrollHeight > height && Number.parseFloat(title.style.fontSize) > 1) {
+        title.style.fontSize = `${Number.parseFloat(title.style.fontSize) - .25}px`;
+      }
+    }
+
+    const frontWritingObserver = typeof ResizeObserver === 'function'
+      ? new ResizeObserver((entries) => entries.forEach(({ target }) => fitFrontWriting(target))) : null;
+    grid.querySelectorAll('.note-writing--front').forEach((writing) => frontWritingObserver?.observe(writing));
+    const refitWriting = () => document.querySelectorAll('.note-writing--front').forEach(fitFrontWriting);
+    document.fonts?.ready.then(refitWriting);
 
     function setState(next) {
       state = next;
@@ -115,8 +151,8 @@
 
     function exposeFace(back) {
       flipper.classList.toggle('is-flipped', back);
-      frontFace.setAttribute('aria-hidden', String(back));
-      backFace.setAttribute('aria-hidden', String(!back));
+      frontFace?.setAttribute('aria-hidden', String(back));
+      backFace?.setAttribute('aria-hidden', String(!back));
       dialog.setAttribute('aria-describedby', `${back ? 'note-back-text' : 'note-front-text'} note-gesture-hint`);
     }
 
@@ -256,13 +292,24 @@
       const sourceWidth = trigger.offsetWidth || sourceRect.width;
       const sourceHeight = trigger.offsetHeight || sourceRect.height;
       const angle = Number.parseFloat(trigger.dataset.angle || '0') || 0;
-      const [front, back] = messageById.get(trigger.dataset.noteId);
+      const [front] = messageById.get(trigger.dataset.noteId);
       activeTrigger = trigger;
       originalVisibility = trigger.style.visibility;
       originalBodyOverflow = document.body.style.overflow;
-      frontText.textContent = front;
-      frontSmall.textContent = trigger.querySelector('.note-small')?.textContent || '';
-      backText.textContent = back;
+      // Expand a clone of this complete component, including both faces. The
+      // paper and its writing keep the same local coordinate system at any size.
+      const paper = trigger.querySelector('.paper-note').cloneNode(true);
+      flipper.replaceChildren(...paper.childNodes);
+      frontFace = flipper.querySelector('.note-front');
+      backFace = flipper.querySelector('.note-back');
+      frontText = frontFace.querySelector('.note-label');
+      frontSmall = frontFace.querySelector('.note-small');
+      backText = backFace.querySelector('.note-back-text');
+      frontText.id = 'note-front-text';
+      frontText.setAttribute('role', 'heading');
+      frontText.setAttribute('aria-level', '2');
+      frontSmall.id = 'note-front-small';
+      backText.id = 'note-back-text';
       flight.style.setProperty('--note-tint', getComputedStyle(trigger).getPropertyValue('--note-tint').trim() || 'none');
       dialog.setAttribute('aria-label', front);
       dialog.classList.toggle('is-reduced-motion', reducedMotion.matches);
@@ -290,6 +337,7 @@
         return;
       }
       document.body.style.overflow = 'hidden';
+      fitFrontWriting(frontFace.querySelector('.note-writing--front'));
       const centerRect = flight.getBoundingClientRect();
       const dx = sourceRect.left + sourceRect.width / 2 - centerRect.left - centerRect.width / 2;
       const dy = sourceRect.top + sourceRect.height / 2 - centerRect.top - centerRect.height / 2;
