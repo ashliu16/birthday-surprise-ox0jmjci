@@ -1,0 +1,5 @@
+This birthday note sample adapts only the bend deformer math from Paperlab.
+Source: https://github.com/NourMtir0722/Paperlab/blob/main/packages/paperlab/src/deformers/bend.ts
+Changes: standalone JavaScript, radians, no Zod/schema/GLSL wrapper.
+The original LICENSE and NOTICE are preserved alongside this file.
+The rest of the paper renderer and gesture interaction is implemented for this sample.

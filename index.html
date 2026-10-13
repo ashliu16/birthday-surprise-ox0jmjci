@@ -8,8 +8,8 @@
   <meta name="theme-color" content="#fff8e9">
   <title>给你的生日惊喜</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=birthday-notes-4">
-  <script src="script.js?v=birthday-notes-4" defer></script>
+  <link rel="stylesheet" href="style.css?v=birthday-notes-5">
+  <script src="script.js?v=birthday-notes-5" defer></script>
 </head>
 <body>
   <main class="scene" aria-label="为你准备的生日惊喜">
@@ -73,10 +73,12 @@
     <div class="note-stage">
       <div id="note-flight" tabindex="0" role="group" aria-label="祝福纸条，左右拖动或按左右方向键翻面" aria-describedby="note-gesture-hint">
         <div id="note-flipper" class="paper-note paper-note--expanded"></div>
+        <div id="note-physical" aria-hidden="true" hidden></div>
       </div>
       <p id="note-gesture-hint" class="note-gesture-hint" role="status">左右拖动纸条，翻到背面</p>
       <div class="note-actions">
         <button id="note-close" type="button">放回去</button>
+        <button id="note-motion" type="button">启用实体翻转</button>
       </div>
     </div>
   </dialog>

@@ -16,6 +16,8 @@
     const hint = document.getElementById('note-gesture-hint');
     const dimmer = document.getElementById('note-dimmer');
     const count = document.getElementById('note-count');
+    const physicalHost = document.getElementById('note-physical');
+    const motionButton = document.getElementById('note-motion');
     if (!grid || !dialog || !flight || !flipper || !noteTemplate || !closeButton || !hint) return;
 
     const triggers = [...grid.querySelectorAll('button.note-trigger[data-note-id]')];
@@ -62,6 +64,99 @@
     let angularVelocity = 0;
     let pointer = null;
     let spring = null;
+    let physicalWanted = !reducedMotion.matches;
+    let motionChosen = false;
+    let physicalAvailable = true;
+    let physicalReady = false;
+    let physicalEngine = null;
+    let enginePromise = null;
+    let selection = 0;
+
+    function hasPhysical() { return physicalWanted && physicalReady && physicalAvailable; }
+
+    function updateMotionUI() {
+      const enabled = hasPhysical();
+      dialog.classList.toggle('has-physical', enabled);
+      dialog.classList.toggle('is-reduced-motion', !enabled);
+      dialog.dataset.mode = enabled ? 'physical' : 'simple';
+      physicalHost.hidden = !enabled;
+      physicalEngine?.activate(enabled);
+      motionButton.hidden = !physicalAvailable;
+      motionButton.disabled = physicalWanted && !physicalReady && physicalAvailable && state !== 'idle';
+      motionButton.textContent = physicalWanted ? physicalReady ? '简洁模式' : '准备纸条…' : '启用实体翻转';
+      exposeFace(isBack(rotation));
+      renderRotation();
+    }
+
+    function unavailable() {
+      physicalAvailable = physicalWanted = physicalReady = false;
+      if (state === 'moving') { updateMotionUI(); return; }
+      if (state === 'returning') { finishClose(); updateMotionUI(); return; }
+      nextOperation();
+      releasePointer();
+      updateMotionUI();
+      if (state !== 'idle') {
+        finishTurn(Math.round(rotation / 180) * 180);
+        setState('reading');
+      }
+    }
+
+    function loadEngine() {
+      if (!enginePromise) enginePromise = new Promise((resolve, reject) => {
+        if (window.BirthdayPaper3D) { resolve(window.BirthdayPaper3D); return; }
+        const script = document.createElement('script');
+        script.src = 'assets/birthday-paper-3d.js?v=birthday-notes-5';
+        script.async = true;
+        script.onload = () => window.BirthdayPaper3D ? resolve(window.BirthdayPaper3D) : reject(new Error('Paper library unavailable'));
+        script.onerror = () => reject(new Error('Paper library did not load'));
+        document.head.append(script);
+      }).then(api => physicalEngine ||= api.createScene(physicalHost, flight, unavailable));
+      return enginePromise;
+    }
+
+    function writingData(element, center = false) {
+      const style = getComputedStyle(element);
+      let x = 0, y = 0, node = element;
+      while (node && node !== flight) { x += node.offsetLeft; y += node.offsetTop; node = node.offsetParent; }
+      const size = Number.parseFloat(style.fontSize);
+      return { text: element.textContent, x: x + (center ? element.offsetWidth / 2 : 0), y,
+        size, weight: style.fontWeight, family: style.fontFamily, color: style.color,
+        lineFactor: Number.parseFloat(style.lineHeight) / size,
+        gap: Number.parseFloat(style.marginBottom) || 0 };
+    }
+
+    function capturePaperData(trigger) {
+      const signature = writingData(backFace.querySelector('.back-signature'));
+      signature.gap = Number.parseFloat(getComputedStyle(backFace.querySelector('.back-signature')).marginTop) || 0;
+      const image = frontFace.querySelector('.note-paper');
+      return { id: trigger.dataset.noteId, src: image.currentSrc || image.src, width: flight.offsetWidth,
+        tint: getComputedStyle(trigger).getPropertyValue('--note-tint').trim() || 'none',
+        front: writingData(frontText, true), caption: writingData(frontSmall, true),
+        back: writingData(backText), eyebrow: writingData(backFace.querySelector('.back-eyebrow')), signature };
+    }
+
+    async function preparePhysical(trigger, data = capturePaperData(trigger)) {
+      if (!physicalWanted || !physicalAvailable) return;
+      const revision = ++selection;
+      updateMotionUI();
+      try {
+        const engine = await loadEngine();
+        if (revision !== selection || activeTrigger !== trigger || !physicalWanted || state === 'returning' || state === 'idle') return;
+        // Let the canvas acquire its size while the complete DOM face remains visible.
+        physicalHost.hidden = false;
+        if (!await engine.setPaper(data)) return;
+        if (revision !== selection || activeTrigger !== trigger || !physicalWanted || state === 'returning' || state === 'idle') {
+          if (revision === selection) engine.clear();
+          return;
+        }
+        physicalReady = true;
+        updateMotionUI();
+      } catch (error) {
+        if (revision !== selection || state === 'idle') return;
+        unavailable();
+        console.warn('Using the complete two-sided paper fallback.', error);
+      }
+    }
 
     function fitFrontWriting(writing) {
       if (!writing || writing.clientHeight < 1 || writing.clientWidth < 1) return;
@@ -103,7 +198,7 @@
       if (!spring) return;
       const previous = spring;
       spring = null;
-      cancelAnimationFrame(previous.frame);
+      previous.control?.stop();
       previous.resolve(false);
     }
 
@@ -157,9 +252,10 @@
     }
 
     function renderRotation() {
-      // Directly change the paper's 3D angle while the finger moves.
-      if (!reducedMotion.matches) {
-        flipper.style.transform = `rotateY(${rotation}deg)`;
+      if (hasPhysical()) {
+        const grip = pointer?.dragged ? Math.max(-1, Math.min(1, pointer.distance / flight.offsetWidth)) : 0;
+        const tilt = pointer?.dragged ? Math.max(-1, Math.min(1, pointer.vertical / 90)) : 0;
+        physicalEngine.pose(rotation, grip, tilt);
         exposeFace(isBack(rotation));
       }
     }
@@ -181,7 +277,7 @@
         finishTurn(target);
         return true;
       }
-      if (reducedMotion.matches) {
+      if (!hasPhysical()) {
         const changed = flipper.classList.contains('is-flipped') !== isBack(target);
         if (changed) {
           flipper.style.transition = 'opacity 75ms linear';
@@ -194,40 +290,29 @@
         finishTurn(target);
         return true;
       }
-      flipper.style.transition = 'none';
-      flipper.style.willChange = 'transform';
       angularVelocity = Math.max(-800, Math.min(800, velocity));
-      // Physical spring: mass 1, stiffness 100, damping 10. Re-grabbing cancels
-      // this frame loop at its current angle, preserving motion continuity.
+      return animateRotation(target, token, { type: 'spring', mass: 1, stiffness: 100, damping: 10,
+        velocity: angularVelocity, restDelta: .15, restSpeed: 2 });
+    }
+
+    function animateRotation(target, token, options) {
       return new Promise((resolve) => {
-        const animation = { frame: 0, resolve, lastTime: 0, startTime: 0 };
+        const animation = { control: null, resolve };
         spring = animation;
-        const tick = (time) => {
-          if (spring !== animation || !current(token)) {
-            if (spring === animation) spring = null;
-            resolve(false);
-            return;
-          }
-          if (!animation.startTime) animation.startTime = time;
-          const dt = Math.min((time - (animation.lastTime || time - 16)) / 1000, .032);
-          animation.lastTime = time;
-          const steps = Math.max(1, Math.ceil(dt / .008));
-          for (let i = 0; i < steps; i += 1) {
-            const step = dt / steps;
-            angularVelocity += (100 * (target - rotation) - 10 * angularVelocity) * step;
-            rotation += angularVelocity * step;
-          }
-          renderRotation();
-          if ((Math.abs(target - rotation) < .15 && Math.abs(angularVelocity) < 2) ||
-              time - animation.startTime > 1400) {
-            spring = null;
-            finishTurn(target);
-            resolve(true);
-            return;
-          }
-          animation.frame = requestAnimationFrame(tick);
-        };
-        animation.frame = requestAnimationFrame(tick);
+        let previous = rotation, previousTime = performance.now();
+        animation.control = physicalEngine.animate(rotation, target, { ...options,
+          onUpdate(latest) {
+            if (spring !== animation || !current(token)) return;
+            const now = performance.now();
+            angularVelocity = (latest - previous) / Math.max(.001, (now - previousTime) / 1000);
+            rotation = previous = latest; previousTime = now;
+            renderRotation();
+          },
+          onComplete() {
+            if (spring !== animation || !current(token)) return;
+            spring = null; finishTurn(target); resolve(true);
+          },
+        });
       });
     }
 
@@ -248,6 +333,12 @@
       const returnFocus = activeTrigger;
       nextOperation();
       releasePointer();
+      selection++;
+      physicalReady = false;
+      physicalEngine?.clear();
+      physicalHost.hidden = true;
+      dialog.classList.remove('has-physical');
+      dialog.classList.add('is-reduced-motion');
       if (activeTrigger) {
         activeTrigger.style.visibility = originalVisibility;
         activeTrigger.setAttribute('aria-expanded', 'false');
@@ -312,14 +403,15 @@
       backText.id = 'note-back-text';
       flight.style.setProperty('--note-tint', getComputedStyle(trigger).getPropertyValue('--note-tint').trim() || 'none');
       dialog.setAttribute('aria-label', front);
-      dialog.classList.toggle('is-reduced-motion', reducedMotion.matches);
+      physicalReady = false;
+      updateMotionUI();
       flipper.style.transition = 'none';
       flipper.style.opacity = '1';
       finishTurn(0);
       flight.style.transition = 'none';
       flight.style.transform = 'none';
-      flight.style.opacity = reducedMotion.matches ? '0' : '1';
-      flight.style.willChange = reducedMotion.matches ? 'opacity' : 'transform';
+      flight.style.opacity = physicalWanted ? '1' : '0';
+      flight.style.willChange = physicalWanted ? 'transform' : 'opacity';
       setState('moving');
       const token = nextOperation();
       try {
@@ -338,13 +430,14 @@
       }
       document.body.style.overflow = 'hidden';
       fitFrontWriting(frontFace.querySelector('.note-writing--front'));
+      if (physicalWanted) void preparePhysical(trigger, capturePaperData(trigger));
       const centerRect = flight.getBoundingClientRect();
       const dx = sourceRect.left + sourceRect.width / 2 - centerRect.left - centerRect.width / 2;
       const dy = sourceRect.top + sourceRect.height / 2 - centerRect.top - centerRect.height / 2;
       const sx = sourceWidth / (flight.offsetWidth || centerRect.width || 1);
       const sy = sourceHeight / (flight.offsetHeight || centerRect.height || 1);
       sourceTransform = `translate3d(${dx}px, ${dy}px, 0) rotate(${angle}deg) scale(${sx}, ${sy})`;
-      flight.style.transform = reducedMotion.matches ? 'none' : sourceTransform;
+      flight.style.transform = physicalWanted ? sourceTransform : 'none';
       trigger.style.visibility = 'hidden';
       trigger.setAttribute('aria-expanded', 'true');
       if (instant) {
@@ -355,11 +448,11 @@
       }
       void flight.getBoundingClientRect();
       if (!await nextFrame(token)) return;
-      flight.style.transition = reducedMotion.matches ? 'opacity 150ms linear' : `transform 260ms ${ease}`;
+      flight.style.transition = physicalWanted ? `transform 260ms ${ease}` : 'opacity 150ms linear';
       flight.style.transform = 'none';
       flight.style.opacity = '1';
-      if (!await waitTransition(flight, reducedMotion.matches ? 'opacity' : 'transform',
-        reducedMotion.matches ? 150 : 260, token)) return;
+      if (!await waitTransition(flight, physicalWanted ? 'transform' : 'opacity',
+        physicalWanted ? 260 : 150, token)) return;
       // Clicking only extracts the note. Its complete front remains visible.
       finishReading(trigger);
     }
@@ -373,20 +466,19 @@
       const token = nextOperation();
       releasePointer();
       setState('returning');
-      flight.style.willChange = reducedMotion.matches ? 'opacity' : 'transform';
-      if (!reducedMotion.matches) {
-        flipper.style.transition = `transform 160ms ${ease}`;
-        rotation = Math.round(rotation / 360) * 360;
-        renderRotation();
-        if (!await waitTransition(flipper, 'transform', 160, token)) return;
+      selection++;
+      flight.style.willChange = physicalWanted ? 'transform' : 'opacity';
+      if (hasPhysical()) {
+        if (!await animateRotation(Math.round(rotation / 360) * 360, token,
+          { duration: .16, ease: [.77, 0, .175, 1] })) return;
       }
       flipper.style.transition = 'none';
       finishTurn(0);
-      flight.style.transition = reducedMotion.matches ? 'opacity 150ms linear' : `transform 260ms ${ease}`;
-      flight.style.transform = reducedMotion.matches ? 'none' : sourceTransform;
-      flight.style.opacity = reducedMotion.matches ? '0' : '1';
-      if (!await waitTransition(flight, reducedMotion.matches ? 'opacity' : 'transform',
-        reducedMotion.matches ? 150 : 260, token)) return;
+      flight.style.transition = physicalWanted ? `transform 260ms ${ease}` : 'opacity 150ms linear';
+      flight.style.transform = physicalWanted ? sourceTransform : 'none';
+      flight.style.opacity = physicalWanted ? '1' : '0';
+      if (!await waitTransition(flight, physicalWanted ? 'transform' : 'opacity',
+        physicalWanted ? 260 : 150, token)) return;
       finishClose();
     }
 
@@ -399,6 +491,7 @@
       flipper.style.opacity = '1';
       pointer = {
         id: event.pointerId, startX: event.clientX, lastX: event.clientX,
+        startY: event.clientY, vertical: 0,
         startRotation: rotation, startRest: resumeTarget, resumeVelocity: angularVelocity,
         lastTime: event.timeStamp, velocity: 0, distance: 0, dragged: false,
         degreesPerPixel: 180 / Math.max(120, flight.offsetWidth * .75),
@@ -413,6 +506,7 @@
       const dx = event.clientX - pointer.startX;
       const dt = event.timeStamp - pointer.lastTime;
       pointer.distance = dx;
+      pointer.vertical = event.clientY - pointer.startY;
       pointer.dragged ||= Math.abs(dx) > 5;
       if (dt > 0) {
         const velocity = (event.clientX - pointer.lastX) / dt * pointer.degreesPerPixel * 1000;
@@ -459,6 +553,15 @@
     flight.addEventListener('dragstart', (event) => event.preventDefault());
 
     closeButton.addEventListener('click', (event) => void closeNote(event.detail === 0));
+    motionButton.addEventListener('click', () => {
+      if (state !== 'reading' && state !== 'settling') return;
+      nextOperation(); releasePointer();
+      motionChosen = true; physicalWanted = !physicalWanted;
+      rotation = restingRotation = Math.round(rotation / 180) * 180;
+      flipper.style.transition = 'none'; flipper.style.opacity = '1';
+      setState('reading'); updateMotionUI(); finishTurn(rotation);
+      if (physicalWanted && !physicalReady) void preparePhysical(activeTrigger);
+    });
     if (dimmer) dimmer.addEventListener('click', (event) => void closeNote(event.detail === 0));
     dialog.addEventListener('click', (event) => {
       if (event.target === dialog) void closeNote();
@@ -489,7 +592,7 @@
       if (event.shiftKey && (document.activeElement === flight || !dialog.contains(document.activeElement))) {
         event.preventDefault();
         closeButton.focus();
-      } else if (!event.shiftKey && (document.activeElement === closeButton || !dialog.contains(document.activeElement))) {
+      } else if (!event.shiftKey && (document.activeElement === (motionButton.hidden ? closeButton : motionButton) || !dialog.contains(document.activeElement))) {
         event.preventDefault();
         flight.focus();
       }
@@ -513,7 +616,8 @@
     window.visualViewport?.addEventListener('resize', onResize);
     const onMotionChange = () => {
       if (state !== 'idle') finishClose();
-      dialog.classList.toggle('is-reduced-motion', reducedMotion.matches);
+      if (!motionChosen) physicalWanted = !reducedMotion.matches;
+      updateMotionUI();
     };
     if (reducedMotion.addEventListener) reducedMotion.addEventListener('change', onMotionChange);
     else reducedMotion.addListener(onMotionChange);
