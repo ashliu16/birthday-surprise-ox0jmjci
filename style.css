@@ -7,10 +7,10 @@
   --hand: "KaiTi", "STKaiti", "Kaiti SC", "FangSong", "PingFang SC", "Microsoft YaHei", sans-serif;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  --note-width: min(68vw, 252px, calc((100vh - 156px) / 2));
+  --note-width: min(68vw, 252px, calc((100vh - 212px - env(safe-area-inset-bottom, 0px) * 2) / 2));
 }
 @supports (height: 100svh) {
-  :root { --note-width: min(68vw, 252px, calc((100svh - 156px) / 2)); }
+  :root { --note-width: min(68vw, 252px, calc((100svh - 212px - env(safe-area-inset-bottom, 0px) * 2) / 2)); }
 }
 * { box-sizing: border-box; }
 html { background: var(--paper); }
@@ -22,25 +22,23 @@ button:focus-visible { outline: 2px solid var(--pink); outline-offset: 4px; }
 @supports (overflow: clip) {
   .scene, .note-grid { overflow: clip; }
 }
-.note-slot { position: absolute; width: 124px; height: 248px; transform-origin: center; transform: rotate(var(--angle)); --note-tint: none; --label-x: 50%; --label-width: 96px; }
-.note-slot--1 { --angle: -17deg; --label-x: 66%; --label-width: 76px; left: -38px; top: -106px; z-index: 6; }
+.note-slot { position: absolute; width: 124px; height: 248px; transform-origin: center; transform: rotate(var(--angle)); --note-tint: none; }
+.note-slot--1 { --angle: -17deg; left: -38px; top: -106px; z-index: 6; }
 .note-slot--2 { --angle: -2deg; --note-tint: hue-rotate(190deg); left: 21%; top: -87px; width: 132px; height: 264px; z-index: 8; }
 .note-slot--3 { --angle: 14deg; --note-tint: hue-rotate(48deg); left: 49%; top: -104px; z-index: 4; }
 .note-slot--4 { --angle: 23deg; --note-tint: hue-rotate(100deg); left: 76%; top: -116px; width: 112px; height: 224px; z-index: 3; }
 .note-slot--5 { --angle: -73deg; --note-tint: hue-rotate(48deg); left: -50px; top: 55px; z-index: 9; }
 .note-slot--6 { --angle: 74deg; --note-tint: hue-rotate(190deg); right: -45px; top: 80px; z-index: 7; }
-.note-slot--7 { --angle: -10deg; --label-x: 73%; --label-width: 70px; left: -43px; top: 172px; width: 112px; height: 224px; z-index: 6; }
-.note-slot--8 { --angle: 11deg; --note-tint: hue-rotate(100deg); --label-x: 27%; --label-width: 70px; right: -44px; top: 185px; width: 110px; height: 220px; z-index: 6; }
+.note-slot--7 { --angle: -58deg; left: -74px; top: 208px; width: 112px; height: 224px; z-index: 6; }
+.note-slot--8 { --angle: 58deg; --note-tint: hue-rotate(100deg); right: -72px; top: 221px; width: 110px; height: 220px; z-index: 6; }
 .note-trigger { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; transition: transform 140ms var(--ease-out); }
 .note-trigger::before, .note-face::before { content: ""; position: absolute; inset: 0; background: url("assets/birthday-note-v2.png") center / contain no-repeat; filter: var(--note-tint, none); pointer-events: none; }
 .note-trigger:active { transform: translateY(3px); }
-.note-content { position: absolute; top: 53%; left: var(--label-x); width: var(--label-width); transform: translateX(-50%); text-align: center; pointer-events: none; }
-.note-label { display: block; font: 600 19px/1.28 var(--hand); letter-spacing: .025em; white-space: pre-line; }
-.note-small { display: block; margin-top: 7px; color: #876750; font: 10px/1.35 var(--hand); letter-spacing: .025em; }
+.note-content { position: absolute; top: 25%; left: 50%; display: flex; align-items: flex-start; gap: 7px; transform: translateX(-50%); pointer-events: none; }
+.note-label { display: block; writing-mode: vertical-rl; text-orientation: upright; font: 600 19px/1.28 var(--hand); letter-spacing: .08em; white-space: nowrap; }
+.note-small { display: block; margin-top: 10px; writing-mode: vertical-rl; text-orientation: upright; color: #876750; font: 10px/1.35 var(--hand); letter-spacing: .08em; white-space: nowrap; }
 .note-slot--7 .note-small, .note-slot--8 .note-small { font-size: 9px; }
 .note-trigger.is-seen .note-label { color: var(--pink); }
-.note-slot--5 .note-content { top: 68%; left: 50%; width: 100px; transform: translate(-50%, -50%) rotate(90deg); }
-.note-slot--6 .note-content { top: 68%; left: 50%; width: 100px; transform: translate(-50%, -50%) rotate(-90deg); }
 .birthday-center { position: absolute; top: 67%; left: 50%; width: min(100% - 48px, 320px); transform: translate(-50%, -50%); text-align: center; }
 .birthday-cake { display: block; width: 264px; height: 264px; margin: 0 auto 14px; object-fit: contain; }
 h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacing: .035em; }
@@ -53,22 +51,27 @@ h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacin
 #note-dialog::backdrop { background: transparent; }
 .note-dimmer { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; padding: 0; background: rgba(74, 40, 24, .22); }
 .note-stage { position: absolute; top: 50%; left: 50%; width: var(--note-width); height: calc(var(--note-width) * 2); transform: translate(-50%, -50%); }
-#note-flight { position: relative; width: 100%; height: 100%; transform: none; transform-origin: center; perspective: 1100px; }
+#note-flight { position: relative; width: 100%; height: 100%; transform: none; transform-origin: center; perspective: 850px; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
+#note-flight:focus-visible { outline: 2px dashed var(--pink); outline-offset: 8px; border-radius: 10px; }
+#note-dialog[data-state="dragging"] #note-flight { cursor: grabbing; }
 #note-flipper { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateY(0deg); }
-#note-flipper.is-flipped { transform: rotateY(180deg); }
 .note-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 34px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .note-face > * { position: relative; }
-.note-front { transform: rotateY(0deg); }
-.note-back { transform: rotateY(180deg); }
-#note-front-text { margin: 0; text-align: center; font: 600 30px/1.5 var(--hand); letter-spacing: .04em; }
+.note-face::before { filter: var(--note-tint, none) drop-shadow(0 8px 7px rgba(64, 37, 25, .12)); }
+.note-front { transform: rotateY(0deg) translateZ(.6px); }
+.note-back { transform: rotateY(180deg) translateZ(.6px); }
+.front-content { display: flex; align-items: flex-start; justify-content: center; gap: 18px; }
+#note-front-text { margin: 0; writing-mode: vertical-rl; text-orientation: upright; font: 600 30px/1.5 var(--hand); letter-spacing: .12em; white-space: nowrap; }
+#note-front-small { margin: 18px 0 0; writing-mode: vertical-rl; text-orientation: upright; color: var(--muted); font: 14px/1.5 var(--hand); letter-spacing: .1em; }
 .back-content { width: 100%; max-height: 90%; overflow-y: auto; scrollbar-width: thin; }
 .back-eyebrow { margin: 0 0 22px; text-align: center; color: var(--pink); font: 14px/1.4 var(--hand); letter-spacing: .12em; }
 #note-back-text { margin: 0; font: 18px/1.85 var(--hand); white-space: pre-line; overflow-wrap: normal; }
 .back-signature { margin: 26px 0 0; color: var(--muted); font: 12px/1.5 var(--hand); text-align: right; }
-.note-actions { position: absolute; top: calc(100% + 12px); left: 50%; display: flex; gap: 6px; transform: translateX(-50%); white-space: nowrap; }
+.note-gesture-hint { position: absolute; top: calc(100% + 14px); left: 50%; margin: 0; padding: 5px 12px; border-radius: 999px; background: var(--paper); transform: translateX(-50%); color: var(--ink); font: 12px/1.5 var(--hand); letter-spacing: .04em; white-space: nowrap; }
+.note-actions { position: absolute; top: calc(100% + 54px); left: 50%; display: flex; transform: translateX(-50%); white-space: nowrap; }
 .note-actions button { min-width: 82px; min-height: 44px; padding: 9px 14px; border: 1px solid rgba(86, 50, 30, .35); border-radius: 999px; background: var(--paper); font-size: 12px; }
 #note-close { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-.is-reduced-motion #note-flipper, .is-reduced-motion .note-face { transform: none; }
+.is-reduced-motion #note-flipper, .is-reduced-motion .note-face { transform: none !important; }
 .is-reduced-motion .note-back { visibility: hidden; }
 .is-reduced-motion #note-flipper.is-flipped .note-front { visibility: hidden; }
 .is-reduced-motion #note-flipper.is-flipped .note-back { visibility: visible; }
@@ -93,6 +96,12 @@ h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacin
 }
 @media (min-width: 700px) {
   .scene { height: max(780px, 100svh); }
+}
+@media (max-height: 650px) {
+  .note-face { padding: 28px 22px; }
+  #note-back-text { font-size: 16px; line-height: 1.75; }
+  .back-eyebrow { margin-bottom: 16px; font-size: 13px; }
+  .back-signature { margin-top: 18px; font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .note-trigger { transition: none; }

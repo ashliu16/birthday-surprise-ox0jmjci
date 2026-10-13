@@ -8,8 +8,8 @@
   <meta name="theme-color" content="#fff8e9">
   <title>给你的生日惊喜</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=birthday-notes-2">
-  <script src="script.js?v=birthday-notes-2" defer></script>
+  <link rel="stylesheet" href="style.css?v=birthday-notes-3">
+  <script src="script.js?v=birthday-notes-3" defer></script>
 </head>
 <body>
   <main class="scene" aria-label="为你准备的生日惊喜">
@@ -33,10 +33,10 @@
         <button class="note-trigger" type="button" data-note-id="secret" data-angle="74"><span class="note-content"><span class="note-label">烦恼先休假</span><span class="note-small">暂停营业</span></span></button>
       </div>
       <div class="note-slot note-slot--7">
-        <button class="note-trigger" type="button" data-note-id="quiet" data-angle="-10"><span class="note-content"><span class="note-label">吃好玩好</span><span class="note-small">很认真的祝福</span></span></button>
+        <button class="note-trigger" type="button" data-note-id="quiet" data-angle="-58"><span class="note-content"><span class="note-label">新的一岁吃好玩好</span><span class="note-small">很认真的祝福</span></span></button>
       </div>
       <div class="note-slot note-slot--8">
-        <button class="note-trigger" type="button" data-note-id="surprise" data-angle="11"><span class="note-content"><span class="note-label">被爱包围</span><span class="note-small">一直都值得</span></span></button>
+        <button class="note-trigger" type="button" data-note-id="surprise" data-angle="58"><span class="note-content"><span class="note-label">愿你一直被爱包围</span><span class="note-small">一直都值得</span></span></button>
       </div>
     </div>
     <section class="birthday-center" aria-labelledby="birthday-title">
@@ -44,17 +44,17 @@
       <h1 id="birthday-title">生日快乐，<br>今天你最大。</h1>
       <p class="birthday-copy">有些祝福，翻过来才懂。</p>
     </section>
-    <footer class="scene-footer">点一张纸条，背面有话偷偷告诉你</footer>
+    <footer class="scene-footer">点开纸条 · 拖动翻面 · 查收小小惊喜</footer>
     <span id="note-count" class="visually-hidden" role="status" aria-live="polite"></span>
     <noscript><p class="no-script-wish">愿你新的一岁，有热爱的事，有相伴的人，也有属于自己的快乐。</p></noscript>
   </main>
-  <dialog id="note-dialog" aria-describedby="note-back-text">
+  <dialog id="note-dialog" aria-describedby="note-front-text note-gesture-hint">
     <button id="note-dimmer" class="note-dimmer" type="button" tabindex="-1" aria-label="关闭当前纸条"></button>
     <div class="note-stage">
-      <div id="note-flight">
+      <div id="note-flight" tabindex="0" role="group" aria-label="祝福纸条，左右拖动或按左右方向键翻面" aria-describedby="note-gesture-hint">
         <div id="note-flipper">
-          <div class="note-face note-front"><h2 id="note-front-text"></h2></div>
-          <div class="note-face note-back">
+          <div class="note-face note-front"><div class="front-content"><h2 id="note-front-text"></h2><p id="note-front-small"></p></div></div>
+          <div class="note-face note-back" aria-hidden="true">
             <div class="back-content">
               <p class="back-eyebrow">偷偷告诉你</p>
               <p id="note-back-text"></p>
@@ -63,8 +63,8 @@
           </div>
         </div>
       </div>
+      <p id="note-gesture-hint" class="note-gesture-hint" role="status">左右拖动纸条，翻到背面</p>
       <div class="note-actions">
-        <button id="note-again" type="button">再翻一次</button>
         <button id="note-close" type="button">放回去</button>
       </div>
     </div>

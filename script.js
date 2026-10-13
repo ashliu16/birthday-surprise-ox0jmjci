@@ -6,32 +6,35 @@
     const dialog = document.getElementById('note-dialog');
     const flight = document.getElementById('note-flight');
     const flipper = document.getElementById('note-flipper');
+    const frontFace = dialog?.querySelector('.note-front');
+    const backFace = dialog?.querySelector('.note-back');
     const frontText = document.getElementById('note-front-text');
+    const frontSmall = document.getElementById('note-front-small');
     const backText = document.getElementById('note-back-text');
     const closeButton = document.getElementById('note-close');
-    const againButton = document.getElementById('note-again');
+    const hint = document.getElementById('note-gesture-hint');
     const dimmer = document.getElementById('note-dimmer');
     const count = document.getElementById('note-count');
-    if (!grid || !dialog || !flight || !flipper || !frontText || !backText ||
-        !closeButton || !againButton) return;
+    if (!grid || !dialog || !flight || !flipper || !frontFace || !backFace ||
+        !frontText || !frontSmall || !backText || !closeButton || !hint) return;
 
     const triggers = [...grid.querySelectorAll('button.note-trigger[data-note-id]')];
     const messages = [
-      ['生日快乐呀', '新的一岁，\n有喜欢的人和事，\n也有小小的好运。', '生日\n快乐呀'],
-      ['开心多一点', '今天的快乐不用省。\n蛋糕可以再来一块，\n笑也可以大声一点。', '开心\n多一点'],
-      ['愿望都成真', '大愿望慢慢实现，\n小愿望今天就满足。\n先吃喜欢的蛋糕。', '愿望\n都成真'],
-      ['今天你最大', '寿星说了算。\n带草莓的那块，\n给我留一口好不好？', '今天\n你最大'],
-      ['蛋糕管够', '友情提示：\n生日当天的快乐，\n不用计算热量。', '蛋糕\n管够'],
-      ['烦恼先休假', '烦恼先放到明天。\n明天到了再商量：\n能不能继续放假？', '烦恼\n先休假'],
-      ['吃好玩好', '这不是敷衍。\n吃好、睡好，\n笑得开心，\n就是很认真的祝福。', '吃好\n玩好'],
-      ['被爱包围', '不用每天闪闪发光。\n有人记得你，\n也有人惦记你。\n普通的你，\n也值得被喜欢。', '被爱\n包围'],
+      ['生日快乐呀', '新的一岁，\n有喜欢的人和事，\n也有小小的好运。'],
+      ['开心多一点', '今天的快乐不用省。\n蛋糕可以再来一块，\n笑也可以大声一点。'],
+      ['愿望都成真', '大愿望慢慢实现，\n小愿望今天就满足。\n先吃喜欢的蛋糕。'],
+      ['今天你最大', '寿星说了算。\n带草莓的那块，\n给我留一口好不好？'],
+      ['蛋糕管够', '友情提示：\n生日当天的快乐，\n不用计算热量。'],
+      ['烦恼先休假', '烦恼先放到明天。\n明天到了再商量：\n能不能继续放假？'],
+      ['新的一岁吃好玩好', '这不是敷衍。\n吃好、睡好，\n笑得开心，\n就是很认真的祝福。'],
+      ['愿你一直被爱包围', '不用每天闪闪发光。\n有人记得你，\n也有人惦记你。\n普通的你，\n也值得被喜欢。'],
     ];
     const messageById = new Map();
     triggers.forEach((trigger, index) => {
       const message = messages[index % messages.length];
       messageById.set(trigger.dataset.noteId, message);
       const label = trigger.querySelector('.note-label');
-      if (label) label.textContent = message[2] || message[0];
+      if (label) label.textContent = message[0];
       trigger.setAttribute('aria-label', message[0]);
       trigger.setAttribute('aria-controls', 'note-dialog');
       trigger.setAttribute('aria-expanded', 'false');
@@ -45,20 +48,32 @@
     let state = 'idle';
     let operation = 0;
     let activeTrigger = null;
-    let lastRequestedTrigger = null;
     let originalVisibility = '';
     let originalBodyOverflow = '';
     let sourceTransform = 'none';
     let fallbackDialog = false;
+    let rotation = 0;
+    let restingRotation = 0;
+    let angularVelocity = 0;
+    let pointer = null;
+    let spring = null;
 
     function setState(next) {
       state = next;
       dialog.dataset.state = next;
-      againButton.disabled = next !== 'reading';
+    }
+
+    function stopSpring() {
+      if (!spring) return;
+      const previous = spring;
+      spring = null;
+      cancelAnimationFrame(previous.frame);
+      previous.resolve(false);
     }
 
     function nextOperation() {
       operation += 1;
+      stopSpring();
       [...waits].forEach((cancel) => cancel());
       return operation;
     }
@@ -84,50 +99,132 @@
         };
         waits.add(finish);
         element.addEventListener('transitionend', onEnd);
-        // Covers zero-distance transitions, reduced motion, and WebView quirks.
         timer = window.setTimeout(finish, duration + 60);
         if (!current(token)) finish();
       });
     }
 
     function nextFrame(token) {
+      return new Promise((resolve) => requestAnimationFrame(() => resolve(current(token))));
+    }
+
+    function isBack(angle) {
+      const normalized = ((angle % 360) + 360) % 360;
+      return normalized > 90 && normalized < 270;
+    }
+
+    function exposeFace(back) {
+      flipper.classList.toggle('is-flipped', back);
+      frontFace.setAttribute('aria-hidden', String(back));
+      backFace.setAttribute('aria-hidden', String(!back));
+      dialog.setAttribute('aria-describedby', `${back ? 'note-back-text' : 'note-front-text'} note-gesture-hint`);
+    }
+
+    function renderRotation() {
+      // Directly change the paper's 3D angle while the finger moves.
+      if (!reducedMotion.matches) {
+        flipper.style.transform = `rotateY(${rotation}deg)`;
+        exposeFace(isBack(rotation));
+      }
+    }
+
+    function finishTurn(target) {
+      rotation = target;
+      restingRotation = target;
+      angularVelocity = 0;
+      renderRotation();
+      exposeFace(isBack(target));
+      hint.textContent = isBack(target) ? '再拖一下纸条，回到正面' : '左右拖动纸条，翻到背面';
+      flipper.style.willChange = '';
+    }
+
+    async function settleTo(target, token, velocity = 0) {
+      if (!current(token)) return false;
+      restingRotation = target;
+      if (Math.abs(rotation - target) < .15 && Math.abs(velocity) < 2) {
+        finishTurn(target);
+        return true;
+      }
+      if (reducedMotion.matches) {
+        const changed = flipper.classList.contains('is-flipped') !== isBack(target);
+        if (changed) {
+          flipper.style.transition = 'opacity 75ms linear';
+          flipper.style.opacity = '0';
+          if (!await waitTransition(flipper, 'opacity', 75, token)) return false;
+          exposeFace(isBack(target));
+          flipper.style.opacity = '1';
+          if (!await waitTransition(flipper, 'opacity', 75, token)) return false;
+        }
+        finishTurn(target);
+        return true;
+      }
+      flipper.style.transition = 'none';
+      flipper.style.willChange = 'transform';
+      angularVelocity = Math.max(-800, Math.min(800, velocity));
+      // Physical spring: mass 1, stiffness 100, damping 10. Re-grabbing cancels
+      // this frame loop at its current angle, preserving motion continuity.
       return new Promise((resolve) => {
-        requestAnimationFrame(() => resolve(current(token)));
+        const animation = { frame: 0, resolve, lastTime: 0, startTime: 0 };
+        spring = animation;
+        const tick = (time) => {
+          if (spring !== animation || !current(token)) {
+            if (spring === animation) spring = null;
+            resolve(false);
+            return;
+          }
+          if (!animation.startTime) animation.startTime = time;
+          const dt = Math.min((time - (animation.lastTime || time - 16)) / 1000, .032);
+          animation.lastTime = time;
+          const steps = Math.max(1, Math.ceil(dt / .008));
+          for (let i = 0; i < steps; i += 1) {
+            const step = dt / steps;
+            angularVelocity += (100 * (target - rotation) - 10 * angularVelocity) * step;
+            rotation += angularVelocity * step;
+          }
+          renderRotation();
+          if ((Math.abs(target - rotation) < .15 && Math.abs(angularVelocity) < 2) ||
+              time - animation.startTime > 1400) {
+            spring = null;
+            finishTurn(target);
+            resolve(true);
+            return;
+          }
+          animation.frame = requestAnimationFrame(tick);
+        };
+        animation.frame = requestAnimationFrame(tick);
       });
     }
 
-    function updateCount() {
-      if (count) count.textContent = `已打开 ${seen.size} / ${triggers.length}`;
-    }
-
     function resetNoteGridPosition() {
-      // overflow:hidden can be scrolled by focus in older WebViews even without
-      // visible scrollbars. The clipped paper arrangement must remain anchored.
+      // Older WebViews may scroll overflow:hidden while focusing an edge note.
       if (grid.scrollLeft !== 0) grid.scrollLeft = 0;
       if (grid.scrollTop !== 0) grid.scrollTop = 0;
     }
 
-    function restoreSource() {
-      if (!activeTrigger) return;
-      activeTrigger.style.visibility = originalVisibility;
-      activeTrigger.setAttribute('aria-expanded', 'false');
+    function releasePointer() {
+      if (!pointer) return;
+      const id = pointer.id;
+      pointer = null;
+      if (flight.hasPointerCapture?.(id)) flight.releasePointerCapture(id);
     }
 
     function finishClose(restoreFocus = true) {
       const returnFocus = activeTrigger;
       nextOperation();
-      restoreSource();
+      releasePointer();
+      if (activeTrigger) {
+        activeTrigger.style.visibility = originalVisibility;
+        activeTrigger.setAttribute('aria-expanded', 'false');
+      }
       setState('idle');
       activeTrigger = null;
-      lastRequestedTrigger = null;
       flipper.style.transition = 'none';
       flipper.style.opacity = '1';
-      flipper.classList.remove('is-flipped');
+      finishTurn(0);
       flight.style.transition = 'none';
       flight.style.transform = 'none';
       flight.style.opacity = '1';
       flight.style.willChange = '';
-      flipper.style.willChange = '';
       document.body.style.overflow = originalBodyOverflow;
       if (fallbackDialog) {
         grid.inert = false;
@@ -135,49 +232,22 @@
       } else if (dialog.open) {
         dialog.close();
       }
-      if (restoreFocus && returnFocus?.isConnected) {
-        returnFocus.focus({ preventScroll: true });
-      }
+      if (restoreFocus && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
       resetNoteGridPosition();
     }
 
-    async function flipTo(back, token) {
-      if (!current(token)) return false;
-      const already = flipper.classList.contains('is-flipped') === back;
-      if (already) {
-        flipper.style.opacity = '1';
-        return true;
-      }
-      if (reducedMotion.matches) {
-        // CSS switches the faces without rotating them in reduced-motion mode.
-        flipper.style.transition = 'opacity 75ms linear';
-        flipper.style.opacity = '0';
-        if (!await waitTransition(flipper, 'opacity', 75, token)) return false;
-        flipper.classList.toggle('is-flipped', back);
-        flipper.style.opacity = '1';
-        return waitTransition(flipper, 'opacity', 75, token);
-      }
-      flipper.style.transition = `transform 220ms ${ease}`;
-      flipper.classList.toggle('is-flipped', back);
-      return waitTransition(flipper, 'transform', 220, token);
-    }
-
     function requestOpen(trigger, instant = false) {
-      // Native modal makes the background inert. Repeated/synthetic clicks cannot
-      // create a second flight; this records only the most recent accepted request.
       if (state !== 'idle' || dialog.hasAttribute('open')) return;
-      lastRequestedTrigger = trigger;
-      void openNote(lastRequestedTrigger, instant);
+      void openNote(trigger, instant);
     }
 
     function finishReading(trigger) {
       setState('reading');
       seen.add(trigger.dataset.noteId);
       trigger.classList.add('is-seen');
-      updateCount();
+      if (count) count.textContent = `已打开 ${seen.size} / ${triggers.length}`;
       flight.style.willChange = '';
-      flipper.style.willChange = '';
-      closeButton.focus({ preventScroll: true });
+      flight.focus({ preventScroll: true });
     }
 
     async function openNote(trigger, instant = false) {
@@ -191,21 +261,20 @@
       originalVisibility = trigger.style.visibility;
       originalBodyOverflow = document.body.style.overflow;
       frontText.textContent = front;
+      frontSmall.textContent = trigger.querySelector('.note-small')?.textContent || '';
       backText.textContent = back;
       flight.style.setProperty('--note-tint', getComputedStyle(trigger).getPropertyValue('--note-tint').trim() || 'none');
       dialog.setAttribute('aria-label', front);
       dialog.classList.toggle('is-reduced-motion', reducedMotion.matches);
-      flipper.classList.remove('is-flipped');
       flipper.style.transition = 'none';
       flipper.style.opacity = '1';
+      finishTurn(0);
       flight.style.transition = 'none';
       flight.style.transform = 'none';
       flight.style.opacity = reducedMotion.matches ? '0' : '1';
       flight.style.willChange = reducedMotion.matches ? 'opacity' : 'transform';
-      flipper.style.willChange = reducedMotion.matches ? 'opacity' : 'transform';
       setState('moving');
       const token = nextOperation();
-
       try {
         fallbackDialog = typeof dialog.showModal !== 'function';
         if (fallbackDialog) {
@@ -231,48 +300,115 @@
       trigger.style.visibility = 'hidden';
       trigger.setAttribute('aria-expanded', 'true');
       if (instant) {
-        // Keyboard activation reveals the readable face immediately.
         flight.style.transform = 'none';
         flight.style.opacity = '1';
-        flipper.classList.add('is-flipped');
         finishReading(trigger);
         return;
       }
-      // Commit the source geometry before starting a retargetable CSS transition.
       void flight.getBoundingClientRect();
       if (!await nextFrame(token)) return;
-      flight.style.transition = reducedMotion.matches
-        ? 'opacity 150ms linear'
-        : `transform 260ms ${ease}`;
+      flight.style.transition = reducedMotion.matches ? 'opacity 150ms linear' : `transform 260ms ${ease}`;
       flight.style.transform = 'none';
       flight.style.opacity = '1';
       if (!await waitTransition(flight, reducedMotion.matches ? 'opacity' : 'transform',
         reducedMotion.matches ? 150 : 260, token)) return;
-      setState('flipping');
-      if (!await flipTo(true, token)) return;
+      // Clicking only extracts the note. Its complete front remains visible.
       finishReading(trigger);
     }
 
     async function closeNote(instant = false) {
-      if (state === 'idle') return;
+      if (state === 'idle' || state === 'returning') return;
       if (instant) {
         finishClose();
         return;
       }
-      if (state === 'returning') return;
       const token = nextOperation();
+      releasePointer();
       setState('returning');
       flight.style.willChange = reducedMotion.matches ? 'opacity' : 'transform';
-      if (!await flipTo(false, token)) return;
-      flight.style.transition = reducedMotion.matches
-        ? 'opacity 150ms linear'
-        : `transform 260ms ${ease}`;
+      if (!reducedMotion.matches) {
+        flipper.style.transition = `transform 160ms ${ease}`;
+        rotation = Math.round(rotation / 360) * 360;
+        renderRotation();
+        if (!await waitTransition(flipper, 'transform', 160, token)) return;
+      }
+      flipper.style.transition = 'none';
+      finishTurn(0);
+      flight.style.transition = reducedMotion.matches ? 'opacity 150ms linear' : `transform 260ms ${ease}`;
       flight.style.transform = reducedMotion.matches ? 'none' : sourceTransform;
       flight.style.opacity = reducedMotion.matches ? '0' : '1';
       if (!await waitTransition(flight, reducedMotion.matches ? 'opacity' : 'transform',
         reducedMotion.matches ? 150 : 260, token)) return;
       finishClose();
     }
+
+    flight.addEventListener('pointerdown', (event) => {
+      if ((state !== 'reading' && state !== 'settling') || pointer ||
+          !event.isPrimary || event.button !== 0) return;
+      const resumeTarget = restingRotation;
+      nextOperation();
+      flipper.style.transition = 'none';
+      flipper.style.opacity = '1';
+      pointer = {
+        id: event.pointerId, startX: event.clientX, lastX: event.clientX,
+        startRotation: rotation, startRest: resumeTarget, resumeVelocity: angularVelocity,
+        lastTime: event.timeStamp, velocity: 0, distance: 0, dragged: false,
+        degreesPerPixel: 180 / Math.max(120, flight.offsetWidth * .75),
+      };
+      flight.setPointerCapture(event.pointerId);
+      setState('dragging');
+      flipper.style.willChange = reducedMotion.matches ? '' : 'transform';
+    });
+
+    flight.addEventListener('pointermove', (event) => {
+      if (!pointer || pointer.id !== event.pointerId) return;
+      const dx = event.clientX - pointer.startX;
+      const dt = event.timeStamp - pointer.lastTime;
+      pointer.distance = dx;
+      pointer.dragged ||= Math.abs(dx) > 5;
+      if (dt > 0) {
+        const velocity = (event.clientX - pointer.lastX) / dt * pointer.degreesPerPixel * 1000;
+        pointer.velocity = pointer.velocity * .35 + velocity * .65;
+      }
+      pointer.lastX = event.clientX;
+      pointer.lastTime = event.timeStamp;
+      if (!pointer.dragged) return;
+      event.preventDefault();
+      const raw = pointer.startRotation + dx * pointer.degreesPerPixel;
+      const low = pointer.startRest - 180;
+      const high = pointer.startRest + 180;
+      // Add resistance beyond one half-turn, instead of letting it spin freely.
+      rotation = raw < low ? low - Math.min(35, (low - raw) * .15)
+        : raw > high ? high + Math.min(35, (raw - high) * .15) : raw;
+      renderRotation();
+    });
+
+    async function endDrag(event, cancelled = false) {
+      if (!pointer || pointer.id !== event.pointerId) return;
+      const gesture = pointer;
+      const velocity = event.timeStamp - gesture.lastTime < 90 ? gesture.velocity : 0;
+      releasePointer();
+      let target = gesture.startRest;
+      if (!cancelled && gesture.dragged) {
+        const projected = rotation + velocity * .06;
+        target = Math.max(gesture.startRest - 180,
+          Math.min(gesture.startRest + 180, Math.round(projected / 180) * 180));
+        if (target === gesture.startRest && Math.abs(gesture.distance) > 24 && Math.abs(velocity) > 420) {
+          target += Math.sign(velocity) * 180;
+        }
+      }
+      const token = nextOperation();
+      setState('settling');
+      if (await settleTo(target, token, cancelled ? 0 : gesture.dragged ? velocity : gesture.resumeVelocity)) {
+        setState('reading');
+      }
+    }
+    flight.addEventListener('pointerup', (event) => void endDrag(event));
+    flight.addEventListener('pointercancel', (event) => void endDrag(event, true));
+    flight.addEventListener('lostpointercapture', (event) => {
+      if (pointer?.id === event.pointerId) void endDrag(event, true);
+    });
+    flight.addEventListener('dragstart', (event) => event.preventDefault());
 
     closeButton.addEventListener('click', (event) => void closeNote(event.detail === 0));
     if (dimmer) dimmer.addEventListener('click', (event) => void closeNote(event.detail === 0));
@@ -281,44 +417,49 @@
     });
     dialog.addEventListener('cancel', (event) => {
       event.preventDefault();
-      void closeNote(true);
+      finishClose();
     });
     dialog.addEventListener('close', () => {
-      // Recover if another caller closes the dialog during an animation.
       if (!dialog.open && state !== 'idle') finishClose();
     });
     dialog.addEventListener('keydown', (event) => {
+      if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') &&
+          (state === 'reading' || state === 'settling')) {
+        event.preventDefault();
+        nextOperation();
+        releasePointer();
+        flipper.style.transition = 'none';
+        flipper.style.opacity = '1';
+        finishTurn(restingRotation + (event.key === 'ArrowRight' ? 180 : -180));
+        setState('reading');
+      }
       if (fallbackDialog && event.key === 'Escape') {
         event.preventDefault();
-        void closeNote(true);
+        finishClose();
       }
       if (!fallbackDialog || event.key !== 'Tab') return;
-      const buttons = [...dialog.querySelectorAll('button')]
-        .filter((button) => !button.disabled && button.getClientRects().length);
-      const first = buttons[0];
-      const last = buttons[buttons.length - 1];
-      if (!first) return;
-      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+      if (event.shiftKey && (document.activeElement === flight || !dialog.contains(document.activeElement))) {
         event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+        closeButton.focus();
+      } else if (!event.shiftKey && (document.activeElement === closeButton || !dialog.contains(document.activeElement))) {
         event.preventDefault();
-        first.focus();
+        flight.focus();
       }
     });
-    againButton.addEventListener('click', async (event) => {
-      if (state !== 'reading') return;
-      if (event.detail === 0) return;
-      const token = nextOperation();
-      setState('flipping');
-      if (!await flipTo(false, token)) return;
-      if (!await flipTo(true, token)) return;
-      setState('reading');
-    });
 
+    let viewportWidth = window.innerWidth;
+    let viewportHeight = window.innerHeight;
+    let visualHeight = window.visualViewport?.height || viewportHeight;
     const onResize = () => {
-      // Geometry captured before rotation/keyboard changes must never be reused.
-      if (state !== 'idle') finishClose();
+      const nextVisualHeight = window.visualViewport?.height || window.innerHeight;
+      const changed = window.innerWidth !== viewportWidth || window.innerHeight !== viewportHeight ||
+        Math.abs(nextVisualHeight - visualHeight) > 1;
+      viewportWidth = window.innerWidth;
+      viewportHeight = window.innerHeight;
+      visualHeight = nextVisualHeight;
+      // Locking body scroll may widen visualViewport by the scrollbar width.
+      // That must not dismiss a note on a short screen.
+      if (changed && state !== 'idle') finishClose();
     };
     window.addEventListener('resize', onResize);
     window.visualViewport?.addEventListener('resize', onResize);
@@ -332,7 +473,7 @@
       if (state !== 'idle') finishClose(false);
     });
     setState('idle');
-    updateCount();
+    if (count) count.textContent = `已打开 0 / ${triggers.length}`;
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
