@@ -17,7 +17,6 @@
     const dimmer = document.getElementById('note-dimmer');
     const count = document.getElementById('note-count');
     const physicalHost = document.getElementById('note-physical');
-    const motionButton = document.getElementById('note-motion');
     if (!grid || !dialog || !flight || !flipper || !noteTemplate || !closeButton || !hint) return;
 
     const triggers = [...grid.querySelectorAll('button.note-trigger[data-note-id]')];
@@ -48,7 +47,6 @@
       trigger.addEventListener('click', (event) => requestOpen(trigger, event.detail === 0));
     });
 
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const ease = 'cubic-bezier(0.77, 0, 0.175, 1)';
     const seen = new Set();
     const waits = new Set();
@@ -64,8 +62,7 @@
     let angularVelocity = 0;
     let pointer = null;
     let spring = null;
-    let physicalWanted = !reducedMotion.matches;
-    let motionChosen = false;
+    let physicalWanted = true;
     let physicalAvailable = true;
     let physicalReady = false;
     let physicalEngine = null;
@@ -77,13 +74,10 @@
     function updateMotionUI() {
       const enabled = hasPhysical();
       dialog.classList.toggle('has-physical', enabled);
-      dialog.classList.toggle('is-reduced-motion', !enabled);
-      dialog.dataset.mode = enabled ? 'physical' : 'simple';
+      dialog.classList.toggle('is-paper-fallback', !enabled);
+      dialog.dataset.mode = enabled ? 'physical' : physicalAvailable ? 'loading' : 'fallback';
       physicalHost.hidden = !enabled;
       physicalEngine?.activate(enabled);
-      motionButton.hidden = !physicalAvailable;
-      motionButton.disabled = physicalWanted && !physicalReady && physicalAvailable && state !== 'idle';
-      motionButton.textContent = physicalWanted ? physicalReady ? '简洁模式' : '准备纸条…' : '启用实体翻转';
       exposeFace(isBack(rotation));
       renderRotation();
     }
@@ -105,7 +99,7 @@
       if (!enginePromise) enginePromise = new Promise((resolve, reject) => {
         if (window.BirthdayPaper3D) { resolve(window.BirthdayPaper3D); return; }
         const script = document.createElement('script');
-        script.src = 'assets/birthday-paper-3d.js?v=birthday-notes-5';
+        script.src = 'assets/birthday-paper-3d.js?v=birthday-notes-6';
         script.async = true;
         script.onload = () => window.BirthdayPaper3D ? resolve(window.BirthdayPaper3D) : reject(new Error('Paper library unavailable'));
         script.onerror = () => reject(new Error('Paper library did not load'));
@@ -338,7 +332,7 @@
       physicalEngine?.clear();
       physicalHost.hidden = true;
       dialog.classList.remove('has-physical');
-      dialog.classList.add('is-reduced-motion');
+      dialog.classList.add('is-paper-fallback');
       if (activeTrigger) {
         activeTrigger.style.visibility = originalVisibility;
         activeTrigger.setAttribute('aria-expanded', 'false');
@@ -498,7 +492,7 @@
       };
       flight.setPointerCapture(event.pointerId);
       setState('dragging');
-      flipper.style.willChange = reducedMotion.matches ? '' : 'transform';
+      flipper.style.willChange = 'transform';
     });
 
     flight.addEventListener('pointermove', (event) => {
@@ -553,15 +547,6 @@
     flight.addEventListener('dragstart', (event) => event.preventDefault());
 
     closeButton.addEventListener('click', (event) => void closeNote(event.detail === 0));
-    motionButton.addEventListener('click', () => {
-      if (state !== 'reading' && state !== 'settling') return;
-      nextOperation(); releasePointer();
-      motionChosen = true; physicalWanted = !physicalWanted;
-      rotation = restingRotation = Math.round(rotation / 180) * 180;
-      flipper.style.transition = 'none'; flipper.style.opacity = '1';
-      setState('reading'); updateMotionUI(); finishTurn(rotation);
-      if (physicalWanted && !physicalReady) void preparePhysical(activeTrigger);
-    });
     if (dimmer) dimmer.addEventListener('click', (event) => void closeNote(event.detail === 0));
     dialog.addEventListener('click', (event) => {
       if (event.target === dialog) void closeNote();
@@ -592,7 +577,7 @@
       if (event.shiftKey && (document.activeElement === flight || !dialog.contains(document.activeElement))) {
         event.preventDefault();
         closeButton.focus();
-      } else if (!event.shiftKey && (document.activeElement === (motionButton.hidden ? closeButton : motionButton) || !dialog.contains(document.activeElement))) {
+      } else if (!event.shiftKey && (document.activeElement === closeButton || !dialog.contains(document.activeElement))) {
         event.preventDefault();
         flight.focus();
       }
@@ -614,13 +599,6 @@
     };
     window.addEventListener('resize', onResize);
     window.visualViewport?.addEventListener('resize', onResize);
-    const onMotionChange = () => {
-      if (state !== 'idle') finishClose();
-      if (!motionChosen) physicalWanted = !reducedMotion.matches;
-      updateMotionUI();
-    };
-    if (reducedMotion.addEventListener) reducedMotion.addEventListener('change', onMotionChange);
-    else reducedMotion.addListener(onMotionChange);
     window.addEventListener('pagehide', () => {
       if (state !== 'idle') finishClose(false);
     });

@@ -66,12 +66,12 @@ h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacin
 #note-dialog[data-state="dragging"] #note-flight { cursor: grabbing; }
 #note-flipper { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateY(0deg); }
 #note-physical { position: absolute; inset: -20px; pointer-events: none; }
-#note-physical canvas { display: block; width: 100%; height: 100%; }
+#note-physical canvas { display: block; width: 100%; height: 100%; filter: drop-shadow(0 8px 7px rgba(64, 37, 25, .12)); }
 #note-physical[hidden] { display: none; }
 .has-physical #note-flipper { opacity: 0 !important; pointer-events: none; }
 .has-physical #note-flight { perspective: none; }
 /* The physical back has the same silhouette viewed from the other side. */
-.is-reduced-motion .note-back .note-paper { transform: scaleX(-1); }
+.is-paper-fallback .note-back .note-paper { transform: scaleX(-1); }
 .back-content { width: 100%; max-height: 100%; overflow-y: auto; scrollbar-width: thin; }
 .back-eyebrow { margin: 0 0 22px; text-align: center; color: var(--pink); font: 14px/1.4 var(--hand); letter-spacing: .12em; }
 .note-back-text { margin: 0; font: 18px/1.85 var(--hand); white-space: pre-line; overflow-wrap: normal; }
@@ -80,10 +80,10 @@ h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacin
 .note-actions { position: absolute; top: calc(100% + 54px); left: 50%; display: flex; gap: 10px; transform: translateX(-50%); white-space: nowrap; }
 .note-actions button { min-width: 82px; min-height: 44px; padding: 9px 14px; border: 1px solid rgba(86, 50, 30, .35); border-radius: 999px; background: var(--paper); font-size: 12px; }
 #note-close { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-.is-reduced-motion #note-flipper, .is-reduced-motion .note-face { transform: none !important; }
-.is-reduced-motion .note-back { visibility: hidden; }
-.is-reduced-motion #note-flipper.is-flipped .note-front { visibility: hidden; }
-.is-reduced-motion #note-flipper.is-flipped .note-back { visibility: visible; }
+.is-paper-fallback #note-flipper, .is-paper-fallback .note-face { transform: none !important; }
+.is-paper-fallback .note-back { visibility: hidden; }
+.is-paper-fallback #note-flipper.is-flipped .note-front { visibility: hidden; }
+.is-paper-fallback #note-flipper.is-flipped .note-back { visibility: visible; }
 @media (hover: hover) and (pointer: fine) {
   .note-trigger:hover { transform: translateY(4px); }
   .note-actions button:hover { border-color: var(--pink); }
