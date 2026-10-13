@@ -186,6 +186,11 @@
     function setState(next) {
       state = next;
       dialog.dataset.state = next;
+      updateBreeze();
+    }
+
+    function updateBreeze() {
+      grid.classList.toggle('is-breeze-paused', state !== 'idle' || document.hidden);
     }
 
     function stopSpring() {
@@ -373,10 +378,17 @@
 
     async function openNote(trigger, instant = false) {
       resetNoteGridPosition();
-      const sourceRect = trigger.getBoundingClientRect();
+      // Freeze the breeze before measuring, and carry its current pose into
+      // the extraction instead of snapping the moving paper back to rest.
+      grid.classList.add('is-breeze-paused');
+      const sourcePaper = trigger.querySelector('.paper-note');
+      const sourceRect = sourcePaper.getBoundingClientRect();
       const sourceWidth = trigger.offsetWidth || sourceRect.width;
       const sourceHeight = trigger.offsetHeight || sourceRect.height;
-      const angle = Number.parseFloat(trigger.dataset.angle || '0') || 0;
+      const transform = getComputedStyle(sourcePaper).transform;
+      const matrix = transform.match(/^matrix(?:3d)?\(([^)]+)\)$/)?.[1].split(',').map(Number);
+      const swayAngle = matrix ? Math.atan2(matrix[1], matrix[0]) * 180 / Math.PI : 0;
+      const angle = (Number.parseFloat(trigger.dataset.angle || '0') || 0) + swayAngle;
       const [front] = messageById.get(trigger.dataset.noteId);
       activeTrigger = trigger;
       originalVisibility = trigger.style.visibility;
@@ -602,6 +614,7 @@
     window.addEventListener('pagehide', () => {
       if (state !== 'idle') finishClose(false);
     });
+    document.addEventListener('visibilitychange', updateBreeze);
     setState('idle');
     if (count) count.textContent = `已打开 0 / ${triggers.length}`;
   };

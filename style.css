@@ -7,6 +7,8 @@
   --hand: "KaiTi", "STKaiti", "Kaiti SC", "FangSong", "PingFang SC", "Microsoft YaHei", sans-serif;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  /* easeInOutSine: https://easings.net/#easeInOutSine */
+  --ease-breeze: cubic-bezier(0.37, 0, 0.63, 1);
   --note-width: min(68vw, 252px, calc((100vh - 212px - env(safe-area-inset-bottom, 0px) * 2) / 2));
 }
 @supports (height: 100svh) {
@@ -34,6 +36,26 @@ button:focus-visible { outline: 2px solid var(--pink); outline-offset: 4px; }
 .note-trigger { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; transition: transform 140ms var(--ease-out); }
 .note-trigger:active { transform: translateY(3px); }
 .paper-note { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; --title-size: 19px; --caption-size: 14px; }
+/* A light breeze moves the whole note around its taped end. The selected
+   paper uses its own 3D gesture renderer, so this only runs in the note grid. */
+.note-trigger > .paper-note { transform-origin: 50% 12%; animation: paper-breeze 7s var(--ease-breeze) infinite; }
+.note-slot--1 > .note-trigger > .paper-note { animation-duration: 6.6s; animation-delay: -1.8s; }
+.note-slot--2 > .note-trigger > .paper-note { animation-duration: 7.8s; animation-delay: -4.1s; }
+.note-slot--3 > .note-trigger > .paper-note { animation-duration: 7.2s; animation-delay: -2.6s; }
+.note-slot--4 > .note-trigger > .paper-note { animation-duration: 6.4s; animation-delay: -5.3s; }
+.note-slot--5 > .note-trigger > .paper-note { animation-duration: 7.6s; animation-delay: -3.7s; }
+.note-slot--6 > .note-trigger > .paper-note { animation-duration: 8s; animation-delay: -6.2s; }
+.note-slot--7 > .note-trigger > .paper-note { animation-duration: 6.8s; animation-delay: -4.9s; }
+.note-slot--8 > .note-trigger > .paper-note { animation-duration: 7.4s; animation-delay: -0.8s; }
+.note-grid.is-breeze-paused .paper-note, .note-trigger:focus-visible > .paper-note { animation-play-state: paused; }
+@keyframes paper-breeze {
+  0%, 100% { transform: translate3d(-1px, 0, 0) rotate(-1.1deg); }
+  50% { transform: translate3d(1px, 2px, 0) rotate(1.1deg); }
+}
+@keyframes paper-breeze-soft {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-.4deg); }
+  50% { transform: translate3d(0, .5px, 0) rotate(.4deg); }
+}
 .note-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .note-front { transform: rotateY(0deg) translateZ(.6px); }
 .note-back { transform: rotateY(180deg) translateZ(.6px); }
@@ -110,6 +132,7 @@ h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacin
   .back-signature { margin-top: 14px; font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .note-slot > .note-trigger > .paper-note { animation-name: paper-breeze-soft; animation-duration: 12s; }
   .note-trigger { transition: none; }
   .note-trigger:active, .note-trigger:hover { transform: none; }
 }
