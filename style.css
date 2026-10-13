@@ -7,10 +7,10 @@
   --hand: "KaiTi", "STKaiti", "Kaiti SC", "FangSong", "PingFang SC", "Microsoft YaHei", sans-serif;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  --note-width: min(50vw, 176px, calc((100vh - 156px) / 3));
+  --note-width: min(68vw, 252px, calc((100vh - 156px) / 2));
 }
 @supports (height: 100svh) {
-  :root { --note-width: min(50vw, 176px, calc((100svh - 156px) / 3)); }
+  :root { --note-width: min(68vw, 252px, calc((100svh - 156px) / 2)); }
 }
 * { box-sizing: border-box; }
 html { background: var(--paper); }
@@ -22,20 +22,25 @@ button:focus-visible { outline: 2px solid var(--pink); outline-offset: 4px; }
 @supports (overflow: clip) {
   .scene, .note-grid { overflow: clip; }
 }
-.note-slot { position: absolute; width: 88px; height: 264px; transform-origin: center; transform: rotate(var(--angle)); }
-.note-slot--1 { --angle: -34deg; left: -4%; top: -92px; z-index: 4; }
-.note-slot--2 { --angle: -11deg; left: 20%; top: -88px; width: 104px; height: 312px; z-index: 6; }
-.note-slot--3 { --angle: 5deg; left: 43%; top: -115px; z-index: 3; }
-.note-slot--4 { --angle: 22deg; left: 65%; top: -116px; z-index: 5; }
-.note-slot--5 { --angle: -38deg; left: -10%; top: 71px; z-index: 2; }
-.note-slot--6 { --angle: 64deg; right: -4%; top: -20px; z-index: 7; }
-.note-slot--7 { --angle: 69deg; right: -8%; top: 89px; z-index: 6; }
-.note-slot--8 { --angle: 76deg; right: -10%; top: 181px; z-index: 5; }
-.note-trigger { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: url("assets/paper-strip.png") center / contain no-repeat; transition: transform 140ms var(--ease-out); }
+.note-slot { position: absolute; width: 124px; height: 248px; transform-origin: center; transform: rotate(var(--angle)); --note-tint: none; --label-x: 50%; --label-width: 96px; }
+.note-slot--1 { --angle: -17deg; --label-x: 66%; --label-width: 76px; left: -38px; top: -106px; z-index: 6; }
+.note-slot--2 { --angle: -2deg; --note-tint: hue-rotate(190deg); left: 21%; top: -87px; width: 132px; height: 264px; z-index: 8; }
+.note-slot--3 { --angle: 14deg; --note-tint: hue-rotate(48deg); left: 49%; top: -104px; z-index: 4; }
+.note-slot--4 { --angle: 23deg; --note-tint: hue-rotate(100deg); left: 76%; top: -116px; width: 112px; height: 224px; z-index: 3; }
+.note-slot--5 { --angle: -73deg; --note-tint: hue-rotate(48deg); left: -50px; top: 55px; z-index: 9; }
+.note-slot--6 { --angle: 74deg; --note-tint: hue-rotate(190deg); right: -45px; top: 80px; z-index: 7; }
+.note-slot--7 { --angle: -10deg; --label-x: 73%; --label-width: 70px; left: -43px; top: 172px; width: 112px; height: 224px; z-index: 6; }
+.note-slot--8 { --angle: 11deg; --note-tint: hue-rotate(100deg); --label-x: 27%; --label-width: 70px; right: -44px; top: 185px; width: 110px; height: 220px; z-index: 6; }
+.note-trigger { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; transition: transform 140ms var(--ease-out); }
+.note-trigger::before, .note-face::before { content: ""; position: absolute; inset: 0; background: url("assets/birthday-note-v2.png") center / contain no-repeat; filter: var(--note-tint, none); pointer-events: none; }
 .note-trigger:active { transform: translateY(3px); }
-.note-label { position: absolute; top: 44%; bottom: 9%; left: 50%; transform: translateX(-50%); writing-mode: vertical-rl; text-orientation: upright; font: 600 18px/1.35 var(--hand); letter-spacing: .11em; white-space: nowrap; }
+.note-content { position: absolute; top: 53%; left: var(--label-x); width: var(--label-width); transform: translateX(-50%); text-align: center; pointer-events: none; }
+.note-label { display: block; font: 600 19px/1.28 var(--hand); letter-spacing: .025em; white-space: pre-line; }
+.note-small { display: block; margin-top: 7px; color: #876750; font: 10px/1.35 var(--hand); letter-spacing: .025em; }
+.note-slot--7 .note-small, .note-slot--8 .note-small { font-size: 9px; }
 .note-trigger.is-seen .note-label { color: var(--pink); }
-.note-slot--6 .note-label, .note-slot--7 .note-label, .note-slot--8 .note-label { writing-mode: horizontal-tb; text-orientation: mixed; top: 69%; bottom: auto; width: 110px; transform: translate(-50%, -50%) rotate(-90deg); text-align: center; letter-spacing: .08em; }
+.note-slot--5 .note-content { top: 68%; left: 50%; width: 100px; transform: translate(-50%, -50%) rotate(90deg); }
+.note-slot--6 .note-content { top: 68%; left: 50%; width: 100px; transform: translate(-50%, -50%) rotate(-90deg); }
 .birthday-center { position: absolute; top: 67%; left: 50%; width: min(100% - 48px, 320px); transform: translate(-50%, -50%); text-align: center; }
 .birthday-cake { display: block; width: 264px; height: 264px; margin: 0 auto 14px; object-fit: contain; }
 h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacing: .035em; }
@@ -47,18 +52,19 @@ h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacin
 #note-dialog:not([open]) { display: none; }
 #note-dialog::backdrop { background: transparent; }
 .note-dimmer { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; padding: 0; background: rgba(74, 40, 24, .22); }
-.note-stage { position: absolute; top: 50%; left: 50%; width: var(--note-width); height: calc(var(--note-width) * 3); transform: translate(-50%, -50%); }
+.note-stage { position: absolute; top: 50%; left: 50%; width: var(--note-width); height: calc(var(--note-width) * 2); transform: translate(-50%, -50%); }
 #note-flight { position: relative; width: 100%; height: 100%; transform: none; transform-origin: center; perspective: 1100px; }
 #note-flipper { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateY(0deg); }
 #note-flipper.is-flipped { transform: rotateY(180deg); }
-.note-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 32px; background: url("assets/paper-strip.png") center / contain no-repeat; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.note-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 34px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.note-face > * { position: relative; }
 .note-front { transform: rotateY(0deg); }
 .note-back { transform: rotateY(180deg); }
-#note-front-text { margin: 0; writing-mode: vertical-rl; text-orientation: upright; font: 600 26px/1.4 var(--hand); letter-spacing: .18em; }
+#note-front-text { margin: 0; text-align: center; font: 600 30px/1.5 var(--hand); letter-spacing: .04em; }
 .back-content { width: 100%; max-height: 90%; overflow-y: auto; scrollbar-width: thin; }
-.back-eyebrow { margin: 0 0 20px; text-align: center; color: var(--pink); font: 14px/1.4 var(--hand); letter-spacing: .12em; }
-#note-back-text { margin: 0; font: 20px/1.65 var(--hand); overflow-wrap: anywhere; }
-.back-signature { margin: 24px 0 0; color: var(--muted); font: 12px/1.5 var(--hand); text-align: right; }
+.back-eyebrow { margin: 0 0 22px; text-align: center; color: var(--pink); font: 14px/1.4 var(--hand); letter-spacing: .12em; }
+#note-back-text { margin: 0; font: 18px/1.85 var(--hand); white-space: pre-line; overflow-wrap: normal; }
+.back-signature { margin: 26px 0 0; color: var(--muted); font: 12px/1.5 var(--hand); text-align: right; }
 .note-actions { position: absolute; top: calc(100% + 12px); left: 50%; display: flex; gap: 6px; transform: translateX(-50%); white-space: nowrap; }
 .note-actions button { min-width: 82px; min-height: 44px; padding: 9px 14px; border: 1px solid rgba(86, 50, 30, .35); border-radius: 999px; background: var(--paper); font-size: 12px; }
 #note-close { background: var(--ink); border-color: var(--ink); color: var(--paper); }
@@ -71,11 +77,18 @@ h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacin
   .note-actions button:hover { border-color: var(--pink); }
 }
 @media (max-width: 350px) {
-  .note-slot { width: 79px; height: 237px; }
-  .note-slot--2 { left: 19%; }
-  .note-slot--3 { left: 43%; }
-  .note-slot--8 { top: 162px; }
-  .note-label { font-size: 16px; }
+  .note-slot { width: 112px; height: 224px; }
+  .note-slot--2 { left: 20%; width: 120px; height: 240px; }
+  .note-slot--3 { left: 48%; }
+  .note-slot--4 { left: 76%; top: -96px; width: 104px; height: 208px; }
+  .note-slot--5 { top: 42px; }
+  .note-slot--6 { top: 65px; }
+  .note-slot--7 { top: 135px; width: 104px; height: 208px; }
+  .note-slot--8 { top: 140px; width: 104px; height: 208px; }
+  .note-label { font-size: 17px; }
+  .note-small { font-size: 9px; }
+  .note-face { padding: 30px; }
+  #note-back-text { font-size: 17px; }
   .birthday-cake { width: 214px; height: 214px; }
 }
 @media (min-width: 700px) {

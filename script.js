@@ -17,21 +17,22 @@
 
     const triggers = [...grid.querySelectorAll('button.note-trigger[data-note-id]')];
     const messages = [
-      ['生日快乐', '也祝你每个普通的日子，都有一点值得高兴的小事。'],
-      ['今天你最大', '除了切蛋糕的时候。那块带草莓的，记得给我留一口。'],
-      ['祝你暴富', '发财计划可以慢慢来。今天先实现奶油和草莓自由。'],
-      ['烦恼暂停', '有效期先写一天。到期了，就一起想办法再续。'],
-      ['年度报告', '认识你这件事，怎么算都很赚。新的一岁，继续一起制造笑话。'],
-      ['先别感动', '没有隐藏大奖。只是有个朋友，认真希望你过得轻松一点。'],
-      ['今日免打扰', '正事明天再说。今天的任务：吃喜欢的，见想见的，好好开心。'],
-      ['背面有惊喜', '惊喜就是：这些普通的日子里，一直有人记得你。'],
+      ['生日快乐呀', '新的一岁，\n有喜欢的人和事，\n也有小小的好运。', '生日\n快乐呀'],
+      ['开心多一点', '今天的快乐不用省。\n蛋糕可以再来一块，\n笑也可以大声一点。', '开心\n多一点'],
+      ['愿望都成真', '大愿望慢慢实现，\n小愿望今天就满足。\n先吃喜欢的蛋糕。', '愿望\n都成真'],
+      ['今天你最大', '寿星说了算。\n带草莓的那块，\n给我留一口好不好？', '今天\n你最大'],
+      ['蛋糕管够', '友情提示：\n生日当天的快乐，\n不用计算热量。', '蛋糕\n管够'],
+      ['烦恼先休假', '烦恼先放到明天。\n明天到了再商量：\n能不能继续放假？', '烦恼\n先休假'],
+      ['吃好玩好', '这不是敷衍。\n吃好、睡好，\n笑得开心，\n就是很认真的祝福。', '吃好\n玩好'],
+      ['被爱包围', '不用每天闪闪发光。\n有人记得你，\n也有人惦记你。\n普通的你，\n也值得被喜欢。', '被爱\n包围'],
     ];
     const messageById = new Map();
     triggers.forEach((trigger, index) => {
       const message = messages[index % messages.length];
       messageById.set(trigger.dataset.noteId, message);
       const label = trigger.querySelector('.note-label');
-      if (label) label.textContent = message[0];
+      if (label) label.textContent = message[2] || message[0];
+      trigger.setAttribute('aria-label', message[0]);
       trigger.setAttribute('aria-controls', 'note-dialog');
       trigger.setAttribute('aria-expanded', 'false');
       trigger.addEventListener('click', (event) => requestOpen(trigger, event.detail === 0));
@@ -191,6 +192,7 @@
       originalBodyOverflow = document.body.style.overflow;
       frontText.textContent = front;
       backText.textContent = back;
+      flight.style.setProperty('--note-tint', getComputedStyle(trigger).getPropertyValue('--note-tint').trim() || 'none');
       dialog.setAttribute('aria-label', front);
       dialog.classList.toggle('is-reduced-motion', reducedMotion.matches);
       flipper.classList.remove('is-flipped');
