@@ -92,7 +92,7 @@
         "flipX": false
     },
     "finished": {
-        "src": "assets/character-finished-cool.webp",
+        "src": "assets/character-finished-cool-v12.webp",
         "width": 1024,
         "height": 1536,
         "anchorX": 517,

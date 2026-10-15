@@ -411,9 +411,11 @@
         count.textContent = `已收下 ${collected.size} / ${triggers.length} 张生辰笺`;
         if (collected.size === triggers.length) {
           scene.classList.add('is-complete');
+          const endingWish = document.getElementById('birthday-title');
+          endingWish.hidden = false;
           document.getElementById('birthday-character').setAttribute('aria-label', '所有生辰笺都已收下，女生面向前方，戴上墨镜，左手斜向上比耶');
           document.getElementById('scene-hint').hidden = true;
-          count.textContent = '所有祝福都已收下。生日快乐，今天你最大。';
+          count.textContent = '所有祝福都已收下。' + endingWish.textContent;
         }
       }
       nextOperation();

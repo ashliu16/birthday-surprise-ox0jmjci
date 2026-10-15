@@ -8,10 +8,10 @@
   <meta name="theme-color" content="#f7f2e8">
   <title>树枝头 · 生辰笺</title>
   <link rel="icon" href="data:,">
-  <link rel="preload" as="font" href="assets/birthday-hand.woff2" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="style.css?v=shengchen-11">
-  <script src="character.js?v=shengchen-11" defer></script>
-  <script src="script.js?v=shengchen-11" defer></script>
+  <link rel="preload" as="font" href="assets/birthday-hand-v12.woff2" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=shengchen-12">
+  <script src="character.js?v=shengchen-12" defer></script>
+  <script src="script.js?v=shengchen-12" defer></script>
 </head>
 <body>
   <main class="scene" aria-label="树枝头的生辰笺">
@@ -54,11 +54,11 @@
         <span style="--px:93px;--py:173px;--drift:35px;--fall:420px;--time:23s;--wait:-18s;--turn:75deg"><img src="assets/petal.webp" alt=""></span>
         <span style="--px:278px;--py:203px;--drift:24px;--fall:340px;--time:21s;--wait:-7s;--turn:110deg"><img src="assets/petal.webp" alt=""></span>
       </div>
-      <h1 id="birthday-title" tabindex="-1">生日快乐，<br>今天你最大。</h1>
+      <h1 class="ending-wish" id="birthday-title" tabindex="-1" hidden>生辰喜乐，岁岁安宁。<br>愿前路明朗，诸事顺遂。</h1>
       <p class="scene-hint" id="scene-hint">点开纸笺，拖动翻面</p>
     </div>
     <span id="note-count" class="visually-hidden" role="status" aria-live="polite"></span>
-    <noscript><p class="no-script-wish">生日快乐。愿你少一点辛苦，多一点偏爱。</p></noscript>
+    <noscript><p class="no-script-wish">请启用 JavaScript 后，点开枝头纸笺。</p></noscript>
   </main>
   <template id="paper-note-template">
     <div class="paper-note">
