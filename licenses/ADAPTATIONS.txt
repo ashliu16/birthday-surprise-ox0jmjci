@@ -3,3 +3,5 @@ Source: https://github.com/NourMtir0722/Paperlab/blob/main/packages/paperlab/src
 Changes: standalone JavaScript, radians, no Zod/schema/GLSL wrapper.
 The original LICENSE and NOTICE are preserved alongside this file.
 The rest of the paper renderer and gesture interaction is implemented for this sample.
+
+2026-10-15: Added the plum-branch scene, separately generated character/paper/cord/petal assets, and collection completion state. Physical paper aspect ratio is now 2.5 with matching canvas texture and camera geometry. The original Paperlab notices and Three/Motion licenses remain. Added a renamed LXGW WenKai subset under SIL OFL 1.1.

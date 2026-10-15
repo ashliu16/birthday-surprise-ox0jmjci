@@ -21,34 +21,91 @@
 
     const triggers = [...grid.querySelectorAll('button.note-trigger[data-note-id]')];
     const messages = [
-      ['生日快乐呀', '新的一岁，\n有喜欢的人和事，\n也有小小的好运。'],
-      ['开心多一点', '今天的快乐不用省。\n蛋糕可以再来一块，\n笑也可以大声一点。'],
-      ['愿望都成真', '大愿望慢慢实现，\n小愿望今天就满足。\n先吃喜欢的蛋糕。'],
-      ['今天你最大', '寿星说了算。\n带草莓的那块，\n给我留一口好不好？'],
-      ['蛋糕管够', '友情提示：\n生日当天的快乐，\n不用计算热量。'],
-      ['烦恼先休假', '烦恼先放到明天。\n明天到了再商量：\n能不能继续放假？'],
-      ['新的一岁吃好玩好', '这不是敷衍。\n吃好、睡好，\n笑得开心，\n就是很认真的祝福。'],
-      ['愿你一直被爱包围', '不用每天闪闪发光。\n有人记得你，\n也有人惦记你。\n普通的你，\n也值得被喜欢。'],
-    ];
+      [
+            "生日快乐",
+            "今天不祝你更懂事。\n祝你任性一点，\n偏心自己一点。"
+      ],
+      [
+            "开心多一点",
+            "工资可以暂时不涨，\n快乐不能跟着降。\n今晚的你，先下班。"
+      ],
+      [
+            "小小好运",
+            "都说能者多劳。\n可我更希望你，\n少劳一点，多得一点。"
+      ],
+      [
+            "认真休息",
+            "什么都没做的一天，\n也没有白过。\n你又不是来给世界\n交作业的。"
+      ],
+      [
+            "今天你最大",
+            "今日安排：\n不处理琐事，\n只处理喜欢的事。\n比如，收下这份偏爱。"
+      ],
+      [
+            "烦恼先休假",
+            "明天的事明天再说。\n如果明天还不想说，\n就再放它一天假。"
+      ],
+      [
+            "给你撑腰",
+            "你已经一个人扛了很多。\n在我这里，\n不用总说“还好”。\n想吐槽就说，我听着。"
+      ],
+      [
+            "日子琐琐碎碎",
+            "无比庆幸此刻年少，\n青春正燃烧。"
+      ]
+];
+    const previews = ['快乐', '多一点', '好运', '休息', '你最大', '先休假', '撑腰', '碎碎'];
     const messageById = new Map();
     triggers.forEach((trigger, index) => {
       const message = messages[index % messages.length];
       messageById.set(trigger.dataset.noteId, message);
       const caption = trigger.querySelector('.note-small')?.textContent || '';
       const paper = noteTemplate.content.firstElementChild.cloneNode(true);
-      paper.querySelector('.note-label').textContent = message[0];
+      paper.querySelector('.note-label').textContent = previews[index];
       paper.querySelector('.note-small').textContent = caption;
       paper.querySelector('.note-back-text').textContent = message[1];
-      trigger.replaceChildren(paper);
+      const cord = document.createElement('span');
+      cord.className = 'red-cord';
+      cord.setAttribute('aria-hidden', 'true');
+      const thread = new Image();
+      thread.src = 'assets/red-cord.webp'; thread.alt = ''; thread.draggable = false;
+      cord.append(thread);
+      trigger.replaceChildren(cord, paper);
       fitFrontWriting(paper.querySelector('.note-writing--front'));
       trigger.setAttribute('aria-label', message[0]);
       trigger.setAttribute('aria-controls', 'note-dialog');
       trigger.setAttribute('aria-expanded', 'false');
-      trigger.addEventListener('click', (event) => requestOpen(trigger, event.detail === 0));
+      trigger.addEventListener('click', (event) => {
+        // Slender hanging tags need generous finger targets. Where those targets
+        // overlap, select the paper nearest the actual touch, rather than DOM order.
+        let chosen = trigger;
+        if (event.detail > 0) {
+          let nearest = Infinity;
+          for (const candidate of triggers) {
+            if (candidate.hidden) continue;
+            const rect = candidate.querySelector('.paper-note').getBoundingClientRect();
+            const dx = (event.clientX - rect.left - rect.width / 2) / (rect.width / 2 + 10);
+            const dy = (event.clientY - rect.top - rect.height / 2) / (rect.height / 2 + 10);
+            const distance = dx * dx + dy * dy;
+            if (distance < nearest) { nearest = distance; chosen = candidate; }
+          }
+        }
+        requestOpen(chosen, event.detail === 0);
+      });
     });
 
     const ease = 'cubic-bezier(0.77, 0, 0.175, 1)';
     const seen = new Set();
+    const collected = new Set();
+    const scene = document.querySelector('.scene');
+    const art = document.getElementById('scene-art');
+    const layoutScene = () => {
+      const scale = scene.clientWidth / 390;
+      art.style.transform = `scale(${scale})`;
+      art.style.setProperty('--scene-scale', scale);
+    };
+    new ResizeObserver(layoutScene).observe(scene);
+    layoutScene();
     const waits = new Set();
     let state = 'idle';
     let operation = 0;
@@ -99,7 +156,7 @@
       if (!enginePromise) enginePromise = new Promise((resolve, reject) => {
         if (window.BirthdayPaper3D) { resolve(window.BirthdayPaper3D); return; }
         const script = document.createElement('script');
-        script.src = 'assets/birthday-paper-3d.js?v=birthday-notes-6';
+        script.src = 'assets/birthday-paper-3d.js?v=shengchen-8';
         script.async = true;
         script.onload = () => window.BirthdayPaper3D ? resolve(window.BirthdayPaper3D) : reject(new Error('Paper library unavailable'));
         script.onerror = () => reject(new Error('Paper library did not load'));
@@ -190,6 +247,7 @@
     }
 
     function updateBreeze() {
+      scene.classList.toggle('is-breeze-paused', state !== 'idle' || document.hidden);
       grid.classList.toggle('is-breeze-paused', state !== 'idle' || document.hidden);
     }
 
@@ -328,8 +386,20 @@
       if (flight.hasPointerCapture?.(id)) flight.releasePointerCapture(id);
     }
 
-    function finishClose(restoreFocus = true) {
+    function finishClose(restoreFocus = true, collect = false) {
       const returnFocus = activeTrigger;
+      if (collect && activeTrigger && seen.has(activeTrigger.dataset.noteId)) {
+        collected.add(activeTrigger.dataset.noteId);
+        activeTrigger.closest('.note-slot').classList.add('is-collected');
+        activeTrigger.hidden = true;
+        count.textContent = `已收下 ${collected.size} / ${triggers.length} 张生辰笺`;
+        if (collected.size === triggers.length) {
+          scene.classList.add('is-complete');
+          document.getElementById('birthday-character').setAttribute('aria-label', '所有生辰笺都已收下，女生放下手，站直，微笑着望向你');
+          document.getElementById('scene-hint').hidden = true;
+          count.textContent = '所有祝福都已收下。生日快乐，今天你最大。';
+        }
+      }
       nextOperation();
       releasePointer();
       selection++;
@@ -358,12 +428,15 @@
       } else if (dialog.open) {
         dialog.close();
       }
-      if (restoreFocus && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+      if (restoreFocus) {
+        const next = returnFocus?.hidden ? triggers.find(t => !t.hidden) || document.getElementById('birthday-title') : returnFocus;
+        next?.focus({ preventScroll: true });
+      }
       resetNoteGridPosition();
     }
 
     function requestOpen(trigger, instant = false) {
-      if (state !== 'idle' || dialog.hasAttribute('open')) return;
+      if (state !== 'idle' || dialog.hasAttribute('open') || trigger.hidden) return;
       void openNote(trigger, instant);
     }
 
@@ -371,24 +444,27 @@
       setState('reading');
       seen.add(trigger.dataset.noteId);
       trigger.classList.add('is-seen');
-      if (count) count.textContent = `已打开 ${seen.size} / ${triggers.length}`;
+
       flight.style.willChange = '';
       flight.focus({ preventScroll: true });
     }
 
     async function openNote(trigger, instant = false) {
+      instant ||= matchMedia('(prefers-reduced-motion: reduce)').matches;
       resetNoteGridPosition();
       // Freeze the breeze before measuring, and carry its current pose into
       // the extraction instead of snapping the moving paper back to rest.
       grid.classList.add('is-breeze-paused');
+      scene.classList.add('is-breeze-paused');
       const sourcePaper = trigger.querySelector('.paper-note');
       const sourceRect = sourcePaper.getBoundingClientRect();
-      const sourceWidth = trigger.offsetWidth || sourceRect.width;
-      const sourceHeight = trigger.offsetHeight || sourceRect.height;
-      const transform = getComputedStyle(sourcePaper).transform;
+      const sceneScale = scene.clientWidth / 390;
+      const sourceWidth = sourcePaper.offsetWidth * sceneScale || sourceRect.width;
+      const sourceHeight = sourcePaper.offsetHeight * sceneScale || sourceRect.height;
+      const transform = getComputedStyle(trigger.closest('.note-slot')).transform;
       const matrix = transform.match(/^matrix(?:3d)?\(([^)]+)\)$/)?.[1].split(',').map(Number);
       const swayAngle = matrix ? Math.atan2(matrix[1], matrix[0]) * 180 / Math.PI : 0;
-      const angle = (Number.parseFloat(trigger.dataset.angle || '0') || 0) + swayAngle;
+      const angle = matrix ? swayAngle : (Number.parseFloat(trigger.dataset.angle || '0') || 0);
       const [front] = messageById.get(trigger.dataset.noteId);
       activeTrigger = trigger;
       originalVisibility = trigger.style.visibility;
@@ -402,6 +478,7 @@
       frontText = frontFace.querySelector('.note-label');
       frontSmall = frontFace.querySelector('.note-small');
       backText = backFace.querySelector('.note-back-text');
+      frontText.textContent = front;
       frontText.id = 'note-front-text';
       frontText.setAttribute('role', 'heading');
       frontText.setAttribute('aria-level', '2');
@@ -465,27 +542,20 @@
 
     async function closeNote(instant = false) {
       if (state === 'idle' || state === 'returning') return;
-      if (instant) {
-        finishClose();
+      if (instant || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        finishClose(true, true);
         return;
       }
       const token = nextOperation();
       releasePointer();
       setState('returning');
       selection++;
-      flight.style.willChange = physicalWanted ? 'transform' : 'opacity';
-      if (hasPhysical()) {
-        if (!await animateRotation(Math.round(rotation / 360) * 360, token,
-          { duration: .16, ease: [.77, 0, .175, 1] })) return;
-      }
-      flipper.style.transition = 'none';
-      finishTurn(0);
-      flight.style.transition = physicalWanted ? `transform 260ms ${ease}` : 'opacity 150ms linear';
-      flight.style.transform = physicalWanted ? sourceTransform : 'none';
-      flight.style.opacity = physicalWanted ? '1' : '0';
-      if (!await waitTransition(flight, physicalWanted ? 'transform' : 'opacity',
-        physicalWanted ? 260 : 150, token)) return;
-      finishClose();
+      flight.style.willChange = 'transform, opacity';
+      flight.style.transition = 'transform 220ms cubic-bezier(.23,1,.32,1), opacity 200ms linear';
+      flight.style.transform = 'translate3d(0, 18px, 0) scale(.96)';
+      flight.style.opacity = '0';
+      if (!await waitTransition(flight, 'opacity', 200, token)) return;
+      finishClose(true, true);
     }
 
     flight.addEventListener('pointerdown', (event) => {
@@ -565,7 +635,7 @@
     });
     dialog.addEventListener('cancel', (event) => {
       event.preventDefault();
-      finishClose();
+      void closeNote(true);
     });
     dialog.addEventListener('close', () => {
       if (!dialog.open && state !== 'idle') finishClose();
@@ -583,7 +653,7 @@
       }
       if (fallbackDialog && event.key === 'Escape') {
         event.preventDefault();
-        finishClose();
+        void closeNote(true);
       }
       if (!fallbackDialog || event.key !== 'Tab') return;
       if (event.shiftKey && (document.activeElement === flight || !dialog.contains(document.activeElement))) {
@@ -616,7 +686,7 @@
     });
     document.addEventListener('visibilitychange', updateBreeze);
     setState('idle');
-    if (count) count.textContent = `已打开 0 / ${triggers.length}`;
+    if (count) count.textContent = `已收下 0 / ${triggers.length}`;
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });

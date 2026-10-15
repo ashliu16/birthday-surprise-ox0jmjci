@@ -1,138 +1,15 @@
-:root {
-  color-scheme: light;
-  --paper: #fff8e9;
-  --ink: #56321e;
-  --muted: #8a6753;
-  --pink: #b46068;
-  --hand: "KaiTi", "STKaiti", "Kaiti SC", "FangSong", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  /* easeInOutSine: https://easings.net/#easeInOutSine */
-  --ease-breeze: cubic-bezier(0.37, 0, 0.63, 1);
-  --note-width: min(68vw, 252px, calc((100vh - 212px - env(safe-area-inset-bottom, 0px) * 2) / 2));
-}
-@supports (height: 100svh) {
-  :root { --note-width: min(68vw, 252px, calc((100svh - 212px - env(safe-area-inset-bottom, 0px) * 2) / 2)); }
-}
-* { box-sizing: border-box; }
-html { background: var(--paper); }
-body { margin: 0; color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
-button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-button:focus-visible { outline: 2px solid var(--pink); outline-offset: 4px; }
-.scene { position: relative; width: min(100%, 480px); height: max(720px, 100vh); height: max(720px, 100svh); margin: 0 auto; overflow: hidden; isolation: isolate; }
-.note-grid { position: absolute; inset: 0 0 auto; height: 50%; overflow: hidden; }
-@supports (overflow: clip) {
-  .scene, .note-grid { overflow: clip; }
-}
-.note-slot { position: absolute; width: 124px; height: 248px; transform-origin: center; transform: rotate(var(--angle)); --note-tint: none; }
-.note-slot--1 { --angle: -17deg; left: -38px; top: -106px; z-index: 6; }
-.note-slot--2 { --angle: -2deg; --note-tint: hue-rotate(190deg); left: 21%; top: -87px; width: 132px; height: 264px; z-index: 8; }
-.note-slot--3 { --angle: 14deg; --note-tint: hue-rotate(48deg); left: 49%; top: -104px; z-index: 4; }
-.note-slot--4 { --angle: 23deg; --note-tint: hue-rotate(100deg); left: 76%; top: -116px; width: 112px; height: 224px; z-index: 3; }
-.note-slot--5 { --angle: -73deg; --note-tint: hue-rotate(48deg); left: -50px; top: 55px; z-index: 9; }
-.note-slot--6 { --angle: 74deg; --note-tint: hue-rotate(190deg); right: -45px; top: 80px; z-index: 7; }
-.note-slot--7 { --angle: -58deg; left: -74px; top: 208px; width: 112px; height: 224px; z-index: 6; }
-.note-slot--8 { --angle: 58deg; --note-tint: hue-rotate(100deg); right: -72px; top: 221px; width: 110px; height: 220px; z-index: 6; }
-.note-trigger { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; transition: transform 140ms var(--ease-out); }
-.note-trigger:active { transform: translateY(3px); }
-.paper-note { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; --title-size: 19px; --caption-size: 14px; }
-/* A light breeze moves the whole note around its taped end. The selected
-   paper uses its own 3D gesture renderer, so this only runs in the note grid. */
-.note-trigger > .paper-note { transform-origin: 50% 12%; animation: paper-breeze 7s var(--ease-breeze) infinite; }
-.note-slot--1 > .note-trigger > .paper-note { animation-duration: 6.6s; animation-delay: -1.8s; }
-.note-slot--2 > .note-trigger > .paper-note { animation-duration: 7.8s; animation-delay: -4.1s; }
-.note-slot--3 > .note-trigger > .paper-note { animation-duration: 7.2s; animation-delay: -2.6s; }
-.note-slot--4 > .note-trigger > .paper-note { animation-duration: 6.4s; animation-delay: -5.3s; }
-.note-slot--5 > .note-trigger > .paper-note { animation-duration: 7.6s; animation-delay: -3.7s; }
-.note-slot--6 > .note-trigger > .paper-note { animation-duration: 8s; animation-delay: -6.2s; }
-.note-slot--7 > .note-trigger > .paper-note { animation-duration: 6.8s; animation-delay: -4.9s; }
-.note-slot--8 > .note-trigger > .paper-note { animation-duration: 7.4s; animation-delay: -0.8s; }
-.note-grid.is-breeze-paused .paper-note, .note-trigger:focus-visible > .paper-note { animation-play-state: paused; }
-@keyframes paper-breeze {
-  0%, 100% { transform: translate3d(-1px, 0, 0) rotate(-1.1deg); }
-  50% { transform: translate3d(1px, 2px, 0) rotate(1.1deg); }
-}
-@keyframes paper-breeze-soft {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(-.4deg); }
-  50% { transform: translate3d(0, .5px, 0) rotate(.4deg); }
-}
-.note-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.note-front { transform: rotateY(0deg) translateZ(.6px); }
-.note-back { transform: rotateY(180deg) translateZ(.6px); }
-.note-paper { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; filter: var(--note-tint, none); pointer-events: none; }
-/* Keep the writing inside the illustrated paper, clear of tape, doodles and fold.
-   These percentages scale with the whole note before its parent rotates it. */
-.note-writing { position: absolute; inset: 18% 16% 18%; overflow: hidden; }
-.note-content { display: flex; width: 100%; height: 100%; justify-content: center; align-items: flex-start; gap: 12px; pointer-events: none; }
-.note-label { display: block; flex: 0 0 auto; margin: 0; writing-mode: vertical-rl; text-orientation: upright; font: 600 var(--title-size)/1.25 var(--hand); letter-spacing: .04em; white-space: nowrap; }
-.note-small { display: none; flex: 0 0 auto; margin: 14px 0 0; writing-mode: vertical-rl; text-orientation: upright; color: var(--muted); font: var(--caption-size)/1.4 var(--hand); letter-spacing: .04em; white-space: nowrap; }
-.paper-note--expanded { --title-size: 38px; }
-.paper-note--expanded .note-small { display: block; }
-.paper-note--expanded .note-paper { filter: var(--note-tint, none) drop-shadow(0 8px 7px rgba(64, 37, 25, .12)); }
-.note-writing--back { display: flex; align-items: center; }
-.note-trigger.is-seen .note-label { color: var(--pink); }
-.birthday-center { position: absolute; top: 67%; left: 50%; width: min(100% - 48px, 320px); transform: translate(-50%, -50%); text-align: center; }
-.birthday-cake { display: block; width: 264px; height: 264px; margin: 0 auto 14px; object-fit: contain; }
-h1 { margin: 0; font: 600 clamp(28px, 8vw, 34px)/1.35 var(--hand); letter-spacing: .035em; }
-.birthday-copy { margin: 17px 0 0; color: var(--muted); font: 16px/1.5 var(--hand); }
-.scene-footer { position: absolute; bottom: max(28px, calc(env(safe-area-inset-bottom) + 16px)); left: 16px; right: 16px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.7; letter-spacing: .045em; }
-.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.no-script-wish { position: absolute; bottom: 76px; left: 24px; right: 24px; font-size: 14px; line-height: 1.7; text-align: center; }
-#note-dialog { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; overflow: hidden; background: transparent; color: var(--ink); }
-#note-dialog:not([open]) { display: none; }
-#note-dialog::backdrop { background: transparent; }
-.note-dimmer { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; padding: 0; background: rgba(74, 40, 24, .22); }
-.note-stage { position: absolute; top: 50%; left: 50%; width: var(--note-width); height: calc(var(--note-width) * 2); transform: translate(-50%, -50%); }
-#note-flight { position: relative; width: 100%; height: 100%; transform: none; transform-origin: center; perspective: 850px; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
-#note-flight:focus-visible { outline: 2px dashed var(--pink); outline-offset: 8px; border-radius: 10px; }
-#note-dialog[data-state="dragging"] #note-flight { cursor: grabbing; }
-#note-flipper { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateY(0deg); }
-#note-physical { position: absolute; inset: -20px; pointer-events: none; }
-#note-physical canvas { display: block; width: 100%; height: 100%; filter: drop-shadow(0 8px 7px rgba(64, 37, 25, .12)); }
-#note-physical[hidden] { display: none; }
-.has-physical #note-flipper { opacity: 0 !important; pointer-events: none; }
-.has-physical #note-flight { perspective: none; }
-/* The physical back has the same silhouette viewed from the other side. */
-.is-paper-fallback .note-back .note-paper { transform: scaleX(-1); }
-.back-content { width: 100%; max-height: 100%; overflow-y: auto; scrollbar-width: thin; }
-.back-eyebrow { margin: 0 0 22px; text-align: center; color: var(--pink); font: 14px/1.4 var(--hand); letter-spacing: .12em; }
-.note-back-text { margin: 0; font: 18px/1.85 var(--hand); white-space: pre-line; overflow-wrap: normal; }
-.back-signature { margin: 26px 0 0; color: var(--muted); font: 12px/1.5 var(--hand); text-align: right; }
-.note-gesture-hint { position: absolute; top: calc(100% + 14px); left: 50%; margin: 0; padding: 5px 12px; border-radius: 999px; background: var(--paper); transform: translateX(-50%); color: var(--ink); font: 12px/1.5 var(--hand); letter-spacing: .04em; white-space: nowrap; }
-.note-actions { position: absolute; top: calc(100% + 54px); left: 50%; display: flex; gap: 10px; transform: translateX(-50%); white-space: nowrap; }
-.note-actions button { min-width: 82px; min-height: 44px; padding: 9px 14px; border: 1px solid rgba(86, 50, 30, .35); border-radius: 999px; background: var(--paper); font-size: 12px; }
-#note-close { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-.is-paper-fallback #note-flipper, .is-paper-fallback .note-face { transform: none !important; }
-.is-paper-fallback .note-back { visibility: hidden; }
-.is-paper-fallback #note-flipper.is-flipped .note-front { visibility: hidden; }
-.is-paper-fallback #note-flipper.is-flipped .note-back { visibility: visible; }
-@media (hover: hover) and (pointer: fine) {
-  .note-trigger:hover { transform: translateY(4px); }
-  .note-actions button:hover { border-color: var(--pink); }
-}
-@media (max-width: 350px) {
-  .note-slot { width: 112px; height: 224px; }
-  .note-slot--2 { left: 20%; width: 120px; height: 240px; }
-  .note-slot--3 { left: 48%; }
-  .note-slot--4 { left: 76%; top: -96px; width: 104px; height: 208px; }
-  .note-slot--5 { top: 42px; }
-  .note-slot--6 { top: 65px; }
-  .note-slot--7 { top: 135px; width: 104px; height: 208px; }
-  .note-slot--8 { top: 140px; width: 104px; height: 208px; }
-  .note-trigger .paper-note { --title-size: 17px; }
-  .note-back-text { font-size: 17px; }
-  .birthday-cake { width: 214px; height: 214px; }
-}
-@media (min-width: 700px) {
-  .scene { height: max(780px, 100svh); }
-}
-@media (max-height: 650px) {
-  .note-back-text { font-size: 15px; line-height: 1.7; }
-  .back-eyebrow { margin-bottom: 12px; font-size: 12px; }
-  .back-signature { margin-top: 14px; font-size: 11px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .note-slot > .note-trigger > .paper-note { animation-name: paper-breeze-soft; animation-duration: 12s; }
-  .note-trigger { transition: none; }
-  .note-trigger:active, .note-trigger:hover { transform: none; }
-}
+@font-face{font-family:BirthdayHand;src:url("assets/birthday-hand.woff2") format("woff2");font-style:normal;font-weight:400 700;font-display:swap}
+:root{color-scheme:light;--paper:#f7f2e8;--ink:#504333;--muted:#8e7c67;--red:#a54e40;--hand:BirthdayHand,"KaiTi","STKaiti",serif;--ease-out:cubic-bezier(.23,1,.32,1);--ease-in-out:cubic-bezier(.77,0,.175,1);--note-width:min(62vw,210px,calc((100vh - 190px - env(safe-area-inset-bottom,0px))/2.5))}
+@supports(height:100svh){:root{--note-width:min(62vw,210px,calc((100svh - 190px - env(safe-area-inset-bottom,0px))/2.5))}}
+*{box-sizing:border-box}html{background:var(--paper)}body{margin:0;min-height:100vh;min-height:100svh;display:grid;place-items:center;color:var(--ink);font-family:var(--hand);-webkit-font-smoothing:antialiased}button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}button:focus-visible{outline:2px solid var(--red);outline-offset:3px}button[hidden],[hidden]{display:none!important}
+.scene{position:relative;width:min(100vw,calc(100vh * 390 / 844),480px);width:min(100vw,calc(100svh * 390 / 844),480px);aspect-ratio:390/844;overflow:hidden;isolation:isolate}.scene-art{position:absolute;left:0;top:0;width:390px;height:844px;transform-origin:0 0}.scene-background{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.note-grid{position:absolute;inset:0;z-index:3;overflow:visible}.note-slot{position:absolute;left:var(--x);top:var(--y);width:var(--tag-width);height:calc(var(--cord) + var(--tag-width)*2.5);transform-origin:50% 0;transform:translateX(-50%) rotate(var(--angle));animation:tag-sway var(--duration) ease-in-out var(--delay) infinite;--note-tint:none}.note-slot--4{--note-tint:sepia(.36) saturate(1.18)}.note-trigger{position:absolute;left:-10px;right:-10px;top:calc(var(--cord) - 10px);height:calc(var(--tag-width)*2.5 + 20px);padding:10px;border:0;background:none;outline-offset:0}.red-cord{position:absolute;pointer-events:none;bottom:calc(100% - 13px);left:50%;width:6px;height:calc(var(--cord) + 4px);overflow:hidden;transform:translateX(-50%)}.red-cord img{position:absolute;max-width:none;left:-49px;top:-2.5%;width:102.4px;height:105%;pointer-events:none}.paper-note{position:relative;width:100%;height:100%;transform-style:preserve-3d;--title-size:14px;--caption-size:12px}.note-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}.note-front{transform:rotateY(0deg) translateZ(.5px)}.note-back{transform:rotateY(180deg) translateZ(.5px)}.note-paper{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:var(--note-tint,none);pointer-events:none}.note-writing{position:absolute;inset:19% 20% 10%;overflow:hidden}.note-content{display:flex;justify-content:center;align-items:flex-start;width:100%;height:100%;gap:8px;pointer-events:none}.note-label{display:block;flex:0 0 auto;margin:0;writing-mode:vertical-rl;text-orientation:upright;font:400 var(--title-size)/1.1 var(--hand);letter-spacing:.04em;white-space:nowrap}.note-small{display:none}.note-slot.is-collected{display:none}.scene.is-breeze-paused .note-slot,.scene.is-breeze-paused .petals span{animation-play-state:paused}.note-slot:focus-within{animation-play-state:paused}.note-trigger:active .paper-note{filter:brightness(.98)}
+@keyframes tag-sway{0%,100%{transform:translateX(-50%) rotate(calc(var(--angle) - 1.15deg))}50%{transform:translateX(-50%) rotate(calc(var(--angle) + 1.15deg))}}
+.character{position:absolute;inset:0;pointer-events:none;z-index:2}.girl{position:absolute;object-fit:contain;pointer-events:none;transition:opacity 360ms var(--ease-out),transform 480ms var(--ease-out)}.girl--reaching{left:105px;top:234px;width:193.7px;height:387.4px}.girl--finished{left:76px;top:255.5px;width:244px;height:366px;opacity:0;transform:translateY(3px)}.scene.is-complete .girl--reaching{opacity:0;transform:translateY(2px)}.scene.is-complete .girl--finished{opacity:1;transform:none;transition-delay:160ms}.petals{position:absolute;inset:0;pointer-events:none;z-index:4}.petals span{position:absolute;left:var(--px);top:var(--py);width:13px;height:13px;opacity:0;animation:petal-fall var(--time) linear var(--wait) infinite}.petals img{width:100%;height:100%;object-fit:contain}.petals span:nth-child(even){width:11px;height:11px}@keyframes petal-fall{0%{opacity:0;transform:translate3d(0,0,0) rotate(var(--turn))}8%{opacity:.8}48%{transform:translate3d(calc(var(--drift)*-.3),calc(var(--fall)*.46),0) rotate(calc(var(--turn) + 90deg))}86%{opacity:.65}100%{opacity:0;transform:translate3d(var(--drift),var(--fall),0) rotate(calc(var(--turn) + 180deg))}}
+h1{position:absolute;top:630px;left:30px;right:30px;margin:0;text-align:center;font:400 31px/1.45 var(--hand);letter-spacing:.07em;outline:none}.scene-hint{position:absolute;left:20px;right:20px;top:781px;margin:0;text-align:center;color:var(--muted);font:13px/1.5 var(--hand);letter-spacing:.09em;transition:opacity 200ms linear}.scene.is-complete .scene-hint{opacity:0;visibility:hidden}.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}.no-script-wish{position:absolute;bottom:2%;left:15%;right:15%;font:14px/1.6 var(--hand)}
+#note-dialog{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;overflow:hidden;background:transparent;color:var(--ink)}#note-dialog:not([open]){display:none}#note-dialog::backdrop{background:transparent}.note-dimmer{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;background:rgba(52,39,27,.28)}.note-stage{position:absolute;top:calc(50% - 34px);left:50%;width:var(--note-width);height:calc(var(--note-width)*2.5);transform:translate(-50%,-50%)}#note-flight{position:relative;width:100%;height:100%;transform-origin:center;perspective:850px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}#note-flight:focus-visible{outline:1px dashed var(--red);outline-offset:5px;border-radius:4px}#note-dialog[data-state="dragging"] #note-flight{cursor:grabbing}#note-flipper{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:rotateY(0deg)}.paper-note--expanded{--title-size:29px;--caption-size:12px}.paper-note--expanded .note-writing--front{inset:22% 20% 12%}.paper-note--expanded .note-paper{filter:var(--note-tint,none) drop-shadow(0 8px 7px #40302122)}#note-physical{position:absolute;inset:-20px;pointer-events:none}#note-physical canvas{display:block;width:100%;height:100%;filter:drop-shadow(0 8px 7px #40302122)}.has-physical #note-flipper{opacity:0!important;pointer-events:none}.has-physical #note-flight{perspective:none}.is-paper-fallback .note-back .note-paper{transform:scaleX(-1)}.note-writing--back{inset:16% 18% 10%;display:flex;align-items:center}.back-content{width:100%;max-height:100%;overflow-y:auto;scrollbar-width:thin}.back-eyebrow{margin:0 0 16px;text-align:center;color:var(--red);font:11px/1.4 var(--hand)}.note-back-text{margin:0;font:17px/1.65 var(--hand);white-space:pre-line;overflow-wrap:normal}.back-signature{margin:18px 0 0;color:var(--muted);font:10px/1.5 var(--hand);text-align:right}.note-gesture-hint{position:absolute;top:calc(100% + 10px);left:50%;margin:0;padding:4px 10px;background:var(--paper);transform:translateX(-50%);color:var(--ink);font:12px/1.5 var(--hand);white-space:nowrap}.note-actions{position:absolute;top:calc(100% + 49px);left:50%;transform:translateX(-50%);white-space:nowrap}.note-actions button{min-width:112px;min-height:44px;padding:9px 20px;border:1px solid #9f4b3f;border-radius:3px;background:var(--paper);color:#914436;font:15px/1.5 var(--hand);transition:transform 120ms var(--ease-out)}.note-actions button:active{transform:scale(.96)}.is-paper-fallback #note-flipper,.is-paper-fallback .note-face{transform:none!important}.is-paper-fallback .note-back{visibility:hidden}.is-paper-fallback #note-flipper.is-flipped .note-front{visibility:hidden}.is-paper-fallback #note-flipper.is-flipped .note-back{visibility:visible}
+@media(max-height:650px){.note-back-text{font-size:14px;line-height:1.6}.back-eyebrow{font-size:10px;margin-bottom:10px}.back-signature{font-size:9px;margin-top:12px}.paper-note--expanded{--title-size:24px}}
+@media(prefers-reduced-motion:reduce){.note-slot,.petals span{animation:none}.petals span{opacity:0}.girl{transition:opacity 180ms linear!important;transform:none!important}.note-actions button{transition:none}}
+
+/* Keep the paper fixed-size inside a larger finger target, including short phones. */
+.note-trigger{left:50%;right:auto;width:max(calc(var(--tag-width) + 20px),calc(44px / var(--scene-scale,1)));transform:translateX(-50%)}
+.note-trigger>.paper-note{width:var(--tag-width);height:calc(var(--tag-width)*2.5);margin:0 auto}
