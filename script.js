@@ -134,6 +134,8 @@
     let physicalEngine = null;
     let enginePromise = null;
     let selection = 0;
+    let approaching = 0;
+    const actor = window.BirthdayCharacter?.create(document.getElementById('birthday-character'));
 
     function hasPhysical() { return physicalWanted && physicalReady && physicalAvailable; }
 
@@ -150,7 +152,7 @@
 
     function unavailable() {
       physicalAvailable = physicalWanted = physicalReady = false;
-      if (state === 'moving') { updateMotionUI(); return; }
+      if (state === 'moving' || state === 'approaching') { updateMotionUI(); return; }
       if (state === 'returning') { finishClose(); updateMotionUI(); return; }
       nextOperation();
       releasePointer();
@@ -165,7 +167,7 @@
       if (!enginePromise) enginePromise = new Promise((resolve, reject) => {
         if (window.BirthdayPaper3D) { resolve(window.BirthdayPaper3D); return; }
         const script = document.createElement('script');
-        script.src = 'assets/birthday-paper-3d.js?v=shengchen-9';
+        script.src = 'assets/birthday-paper-3d.js?v=shengchen-10';
         script.async = true;
         script.onload = () => window.BirthdayPaper3D ? resolve(window.BirthdayPaper3D) : reject(new Error('Paper library unavailable'));
         script.onerror = () => reject(new Error('Paper library did not load'));
@@ -254,6 +256,7 @@
     function setState(next) {
       state = next;
       dialog.dataset.state = next;
+      scene.setAttribute('aria-busy', String(next === 'approaching'));
       updateBreeze();
     }
 
@@ -397,7 +400,9 @@
       if (flight.hasPointerCapture?.(id)) flight.releasePointerCapture(id);
     }
 
-    function finishClose(restoreFocus = true, collect = false) {
+    function finishClose(restoreFocus = true, collect = false, instant = false) {
+      approaching++;
+      actor?.cancel();
       const returnFocus = activeTrigger;
       if (collect && activeTrigger && seen.has(activeTrigger.dataset.noteId)) {
         collected.add(activeTrigger.dataset.noteId);
@@ -443,11 +448,27 @@
         const next = returnFocus?.hidden ? triggers.find(t => !t.hidden) || document.getElementById('birthday-title') : returnFocus;
         next?.focus({ preventScroll: true });
       }
+      if (collected.size === triggers.length) void actor?.finish({ instant });
+      else if (collect) void actor?.rest({ instant });
+      grid.querySelectorAll('.is-targeted').forEach(slot => slot.classList.remove('is-targeted'));
       resetNoteGridPosition();
     }
 
-    function requestOpen(trigger, instant = false) {
-      if (state !== 'idle' || dialog.hasAttribute('open') || trigger.hidden) return;
+    async function requestOpen(trigger, instant = false) {
+      if ((state !== 'idle' && state !== 'approaching') || dialog.hasAttribute('open') || trigger.hidden) return;
+      const request = ++approaching;
+      if (actor) {
+        setState('approaching');
+        triggers.forEach(note => note.closest('.note-slot').classList.toggle('is-targeted', note === trigger));
+        const bounds = trigger.querySelector('.paper-note').getBoundingClientRect();
+        const sceneBounds = art.getBoundingClientRect();
+        const scale = scene.clientWidth / 390;
+        const target = { id: trigger.dataset.noteId,
+          x: (bounds.left + bounds.width / 2 - sceneBounds.left) / scale,
+          y: (bounds.bottom - sceneBounds.top) / scale - 3 };
+        const arrived = await actor.reach(target, { instant });
+        if (!arrived || request !== approaching || state !== 'approaching') return;
+      }
       void openNote(trigger, instant);
     }
 
@@ -554,7 +575,7 @@
     async function closeNote(instant = false) {
       if (state === 'idle' || state === 'returning') return;
       if (instant || matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        finishClose(true, true);
+        finishClose(true, true, true);
         return;
       }
       const token = nextOperation();
@@ -650,6 +671,12 @@
     });
     dialog.addEventListener('close', () => {
       if (!dialog.open && state !== 'idle') finishClose();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && state === 'approaching') {
+        event.preventDefault();
+        finishClose();
+      }
     });
     dialog.addEventListener('keydown', (event) => {
       if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') &&
