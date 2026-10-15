@@ -64,6 +64,15 @@
       paper.querySelector('.note-label').textContent = previews[index];
       paper.querySelector('.note-small').textContent = caption;
       paper.querySelector('.note-back-text').textContent = message[1];
+      if (trigger.dataset.noteId === 'pause') {
+        const blossom = new Image();
+        blossom.className = 'note-blossom';
+        blossom.src = 'assets/plum-blossom.webp';
+        blossom.alt = '';
+        blossom.draggable = false;
+        blossom.addEventListener('error', () => blossom.remove(), { once: true });
+        paper.querySelector('.note-front').append(blossom);
+      }
       const cord = document.createElement('span');
       cord.className = 'red-cord';
       cord.setAttribute('aria-hidden', 'true');
@@ -156,7 +165,7 @@
       if (!enginePromise) enginePromise = new Promise((resolve, reject) => {
         if (window.BirthdayPaper3D) { resolve(window.BirthdayPaper3D); return; }
         const script = document.createElement('script');
-        script.src = 'assets/birthday-paper-3d.js?v=shengchen-8';
+        script.src = 'assets/birthday-paper-3d.js?v=shengchen-9';
         script.async = true;
         script.onload = () => window.BirthdayPaper3D ? resolve(window.BirthdayPaper3D) : reject(new Error('Paper library unavailable'));
         script.onerror = () => reject(new Error('Paper library did not load'));
@@ -180,10 +189,12 @@
       const signature = writingData(backFace.querySelector('.back-signature'));
       signature.gap = Number.parseFloat(getComputedStyle(backFace.querySelector('.back-signature')).marginTop) || 0;
       const image = frontFace.querySelector('.note-paper');
+      const blossom = frontFace.querySelector('.note-blossom');
       return { id: trigger.dataset.noteId, src: image.currentSrc || image.src, width: flight.offsetWidth,
         tint: getComputedStyle(trigger).getPropertyValue('--note-tint').trim() || 'none',
         front: writingData(frontText, true), caption: writingData(frontSmall, true),
-        back: writingData(backText), eyebrow: writingData(backFace.querySelector('.back-eyebrow')), signature };
+        back: writingData(backText), eyebrow: writingData(backFace.querySelector('.back-eyebrow')), signature,
+        blossom: blossom ? { src: blossom.currentSrc || blossom.src, x: .83, y: .125, size: .30 } : null };
     }
 
     async function preparePhysical(trigger, data = capturePaperData(trigger)) {

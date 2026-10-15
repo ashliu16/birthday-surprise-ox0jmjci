@@ -13,3 +13,6 @@ h1{position:absolute;top:630px;left:30px;right:30px;margin:0;text-align:center;f
 /* Keep the paper fixed-size inside a larger finger target, including short phones. */
 .note-trigger{left:50%;right:auto;width:max(calc(var(--tag-width) + 20px),calc(44px / var(--scene-scale,1)));transform:translateX(-50%)}
 .note-trigger>.paper-note{width:var(--tag-width);height:calc(var(--tag-width)*2.5);margin:0 auto}
+
+/* One small blossom is physically attached to the front corner of the rest note. */
+.note-blossom{position:absolute;left:83%;top:12.5%;width:30%;height:auto;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 1px 1px #56321e20)}
