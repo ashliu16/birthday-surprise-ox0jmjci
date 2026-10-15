@@ -92,7 +92,7 @@
         "flipX": false
     },
     "finished": {
-        "src": "assets/girl-finished.webp",
+        "src": "assets/character-finished-cool.webp",
         "width": 1024,
         "height": 1536,
         "anchorX": 517,
@@ -269,7 +269,7 @@
       const token = cancel();
       if (!await load('finished') || token !== revision) return;
       show('finished', 'complete'); restPose = 'finished';
-      root.setAttribute('aria-label', '所有生辰笺都已收下，女生放下手，站直，微笑着望向你');
+      root.setAttribute('aria-label', '所有生辰笺都已收下，女生面向前方，戴上墨镜，左手斜向上比耶');
       delete root.dataset.target; delete root.dataset.tiptoe;
       await travel(199, 612, token, reduced.matches || instant ? 0 : 300);
     }
