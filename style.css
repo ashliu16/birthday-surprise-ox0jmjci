@@ -25,6 +25,9 @@
 /* The viewport is the stage; paper and character have independent sizing. */
 .scene-footer{position:absolute;left:var(--footer-left,20px);bottom:var(--footer-bottom,24px);width:var(--footer-width,calc(100% - 40px));z-index:5;text-align:center}
 .ending-wish span{display:block;white-space:nowrap}
+.scene-background{height:auto;-webkit-mask-image:none;mask-image:none}
+.character.is-ending-breeze .actor-pose{transition:opacity 320ms linear}
+@media(prefers-reduced-motion:reduce){.character.is-ending-breeze .actor-pose{transition:none}}
 .character:not([data-pose]){clip-path:none}.character:not([data-pose]) .actor{left:auto;top:auto;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 110px)}.character:not([data-pose]) .actor-pose{left:auto;top:auto;right:0;bottom:0;width:auto;height:350px;height:clamp(240px,46svh,400px)}
 @media(max-width:600px),(max-height:600px) and (orientation:landscape){.scene{width:100%;max-width:none}}
 #note-dialog[data-layout="landscape"] .note-stage{top:calc((100% + env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))/2);left:calc(50% - 86px)}

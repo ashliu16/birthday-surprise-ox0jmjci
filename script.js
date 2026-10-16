@@ -119,6 +119,9 @@
     const petals = art.querySelector('.petals');
     const slots = [...grid.querySelectorAll('.note-slot')].map(slot => ({
       slot, cord: Number.parseFloat(slot.style.getPropertyValue('--cord')),
+      x: Number.parseFloat(slot.style.getPropertyValue('--x')),
+      y: Number.parseFloat(slot.style.getPropertyValue('--y')),
+      tagWidth: Number.parseFloat(slot.style.getPropertyValue('--tag-width')),
     }));
     const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
     let layout = null;
@@ -148,7 +151,8 @@
       const footerFont = Math.min(22, width * .055, footerWidth / (11 * 1.08));
       const footerBottom = safeBottom + (compact || landscape ? 12 : 24);
       const groundY = height - footerBottom - footerFont * 1.85 * 2 - (compact || landscape ? 18 : 28);
-      const rightTagBottom = (79 + 76 * cordFactor + 70) * scale + paperTop;
+      const rightTagBottom = Math.max(...slots.filter(item => item.x > 195).map(item =>
+        item.y + item.cord * cordFactor + item.tagWidth * 2.5 + 6)) * scale + paperTop;
       const maxBodyHeight = landscape ? groundY - safeTop - 14 : groundY - rightTagBottom - 12;
       const bodyHeight = Math.max(130, Math.min(landscape ? height * .62 : clamp(height * .43, 255, 390), maxBodyHeight));
       layout = { width, height, safeTop, safeBottom, safeLeft, safeRight, landscape,

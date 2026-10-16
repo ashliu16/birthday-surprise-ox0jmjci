@@ -170,6 +170,26 @@
     birthday: 'tiptoe-left', star: 'reach-left', rich: 'reach-left', pause: 'reach-low',
     report: 'reach-right', secret: 'reach-right', quiet: 'reach-right', surprise: 'tiptoe-right',
   };
+  // Model-drawn whole figures. Runtime only changes their visibility.
+  const ENDING_SOURCES = [
+    'assets/character-ending-idle-v18-00.webp', 'assets/character-ending-idle-v18-01.webp',
+    'assets/character-ending-idle-v18-02.webp', 'assets/character-ending-idle-v18-03.webp',
+    'assets/character-ending-idle-v18-04.webp', 'assets/character-ending-idle-v18-05.webp',
+    'assets/character-ending-idle-v18-06.webp', 'assets/character-ending-idle-v18-07.webp',
+    'assets/character-ending-idle-v18-08.webp', 'assets/character-ending-idle-v18-09.webp',
+    'assets/character-ending-idle-v18-10.webp', 'assets/character-ending-idle-v18-11.webp',
+    'assets/character-ending-idle-v18-12.webp', 'assets/character-ending-idle-v18-13.webp',
+  ];
+  const ENDING_NAMES = ENDING_SOURCES.slice(1, 13).map((src, index) => {
+    const name = `ending-${index + 1}`;
+    POSES[name] = { src, width: 646, height: 828, anchorX: 297, anchorY: 594,
+      scale: 1, bounds: [215, 234, 390, 594] };
+    return name;
+  });
+  // A settled wind drawing is also the static/reduced-motion ending.
+  // Baseline 00/13 remain archived with the complete source sequence.
+  POSES.finished = { ...POSES['ending-11'] };
+  const isEndingPose = name => name === 'finished' || name.startsWith('ending-');
   const EASE = 'cubic-bezier(.23,1,.32,1)';
   // The stride keeps a steady rhythm, so its travel must keep a steady speed.
   const WALK_EASE = 'linear';
@@ -180,7 +200,7 @@
     const frames = root.querySelector('.actor-frames');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const images = new Map(), ready = new Map();
-    let revision = 0, movement = null, toeLift = null, strideTimer = 0;
+    let revision = 0, movement = null, toeLift = null, strideTimer = 0, endingTimer = 0, endingGeneration = 0;
     let position = { x: 390, y: 610 }, pose = 'peek', restPose = 'idle-left';
     let metrics = null, factor = 1;
 
@@ -220,8 +240,9 @@
         const data = POSES.peek, scale = (data.scale || SCALE) * factor;
         show('peek', 'peek');
         place(next.edgeX - (data.gripX - data.anchorX) * scale, next.groundY);
-      } else if (pose === 'finished') {
+      } else if (isEndingPose(pose)) {
         place(fitX('finished', next.centerX), next.groundY);
+        void startEndingMotion(revision);
       } else {
         const name = position.x < next.centerX ? 'idle-right' : 'idle-left';
         void load(name);
@@ -262,7 +283,7 @@
       const next = image(name);
       for (const img of images.values()) img.classList.toggle('is-current', img === next);
       pose = name;
-      root.dataset.pose = name;
+      root.dataset.pose = isEndingPose(name) ? 'finished' : name;
       root.dataset.activity = activity;
     }
 
@@ -285,13 +306,38 @@
       const current = currentPosition();
       revision++;
       clearInterval(strideTimer); strideTimer = 0;
+      stopEndingMotion();
       movement?.cancel(); movement = null;
       toeLift?.cancel(); toeLift = null;
       root.classList.remove('is-walking', 'is-facing-right');
       place(current.x, current.y);
       if (pose.startsWith('walk')) show(restPose, 'waiting');
       else if (pose === 'peek') root.dataset.activity = 'peek';
+      else if (isEndingPose(pose)) show('finished', 'complete');
       return revision;
+    }
+
+    function stopEndingMotion() {
+      endingGeneration++;
+      clearInterval(endingTimer); endingTimer = 0;
+      root.classList.remove('is-ending-breeze');
+      delete root.dataset.endingFrame;
+    }
+
+    async function startEndingMotion(token) {
+      stopEndingMotion();
+      const generation = endingGeneration;
+      if (reduced.matches || document.hidden || !isEndingPose(pose)) return;
+      const loaded = await Promise.all(ENDING_NAMES.map(load));
+      if (generation !== endingGeneration || token !== revision || reduced.matches || document.hidden || !isEndingPose(pose) || !loaded.every(Boolean)) return;
+      root.classList.add('is-ending-breeze');
+      let frame = 0;
+      root.dataset.endingFrame = '0';
+      endingTimer = window.setInterval(() => {
+        frame = (frame + 1) % ENDING_NAMES.length;
+        show(ENDING_NAMES[frame], 'complete');
+        root.dataset.endingFrame = String(frame);
+      }, 467);
     }
 
     async function travel(x, y, token, duration, easing = EASE) {
@@ -421,10 +467,24 @@
       if (!await load('finished') || token !== revision) return;
       sizeAll(metrics.actorFactor);
       show('finished', 'complete'); restPose = 'finished';
-      root.setAttribute('aria-label', '所有生辰笺都已收下，女生面向前方，戴上墨镜，左手斜向上比耶');
+      root.setAttribute('aria-label', '所有生辰笺都已收下，女生面向前方戴墨镜比耶，轻轻摆头，发梢与裙边随风向左微动');
       delete root.dataset.target; delete root.dataset.tiptoe;
-      await travel(fitX('finished', metrics.centerX), metrics.groundY, token, reduced.matches || instant ? 0 : 300);
+      if (await travel(fitX('finished', metrics.centerX), metrics.groundY, token, reduced.matches || instant ? 0 : 300)) {
+        void startEndingMotion(token);
+      }
     }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopEndingMotion();
+      else if (isEndingPose(pose)) void startEndingMotion(revision);
+    });
+    const motionPreferenceChanged = () => {
+      if (!isEndingPose(pose)) return;
+      stopEndingMotion(); show('finished', 'complete');
+      if (!reduced.matches) void startEndingMotion(revision);
+    };
+    if (reduced.addEventListener) reduced.addEventListener('change', motionPreferenceChanged);
+    else reduced.addListener(motionPreferenceChanged);
 
     layout(initialLayout);
     void load('peek');
