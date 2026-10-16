@@ -171,6 +171,7 @@
     report: 'reach-right', secret: 'reach-right', quiet: 'reach-right', surprise: 'tiptoe-right',
   };
   const EASE = 'cubic-bezier(.23,1,.32,1)';
+  const WALK_EASE = getComputedStyle(document.documentElement).getPropertyValue('--ease-in-out').trim() || EASE;
 
   function create(root, initialLayout) {
     if (!root) return null;
@@ -289,13 +290,13 @@
       return revision;
     }
 
-    async function travel(x, y, token, duration) {
+    async function travel(x, y, token, duration, easing = EASE) {
       const start = currentPosition();
       if (reduced.matches || duration === 0 || typeof actor.animate !== 'function') { place(x, y); return token === revision; }
       movement = actor.animate([
         { transform: `translate3d(${start.x}px,${start.y}px,0)` },
         { transform: `translate3d(${x}px,${y}px,0)` },
-      ], { duration, easing: EASE, fill: 'forwards' });
+      ], { duration, easing, fill: 'forwards' });
       const animation = movement;
       const complete = await animation.finished.then(() => true, () => false);
       if (!complete || token !== revision) return false;
@@ -340,10 +341,12 @@
       if (!available) return true; // Optional artwork cannot block reading a wish.
       const distance = Math.hypot(x - position.x, y - position.y);
       const immediate = instant || reduced.matches || typeof actor.animate !== 'function';
+      let walkingVisible = false;
       if (!immediate && distance > 14) {
         const walking = await Promise.all([load('walk-a'), load('walk-b'), load('idle-left'), load('idle-right')]);
         if (token !== revision) return false;
         if (walking.every(Boolean)) {
+          walkingVisible = true;
           restPose = x < metrics.centerX ? 'idle-right' : 'idle-left';
           root.classList.add('is-walking');
           root.classList.toggle('is-facing-right', x > position.x);
@@ -352,8 +355,11 @@
           strideTimer = window.setInterval(() => show(++step % 2 ? 'walk-b' : 'walk-a', 'walking'), 120);
         }
       }
-      const duration = immediate ? 0 : Math.min(480, Math.max(220, distance * 1.5));
-      if (!await travel(x, y, token, duration)) return false;
+      // Give a finger tap several readable steps before switching to the reach.
+      const duration = immediate ? 0 : walkingVisible
+        ? Math.min(800, Math.max(600, distance * 2.4))
+        : Math.min(480, Math.max(220, distance * 1.5));
+      if (!await travel(x, y, token, duration, walkingVisible ? WALK_EASE : EASE)) return false;
       clearInterval(strideTimer); strideTimer = 0;
       root.classList.remove('is-walking', 'is-facing-right');
       show(name, 'reaching');
