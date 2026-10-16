@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <base href="../">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="树枝头的生辰笺，一张一张，都是给你的偏爱。">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#f9f5f0">
+  <title>树枝头 · 生辰笺</title>
+  <link rel="icon" href="data:,">
+  <link rel="preload" as="font" href="assets/birthday-hand-v12.woff2" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=shengchen-20">
+  <script src="character-straight.js?v=straight-hair-1" defer></script>
+  <script src="script.js?v=shengchen-20" defer></script>
+</head>
+<body>
+  <main class="scene" aria-label="树枝头的生辰笺">
+    <div class="scene-art" id="scene-art">
+      <img class="scene-background" src="assets/plum-branch-v18.webp" width="1916" height="821" alt="一枝朱砂红梅从左侧自然伸入，枝杈错落，生辰笺悬于枝间" fetchpriority="high" decoding="async">
+      <div id="note-grid" class="note-grid" aria-label="八张藏着惊喜的生辰笺">
+      <div class="note-slot note-slot--1" style="--x:28px;--y:61px;--cord:36px;--tag-width:26px;--angle:-5deg;--duration:6.63s;--delay:-0.73s">
+        <button class="note-trigger" type="button" data-note-id="birthday" data-angle="-5"><span class="note-small">给今天的你</span></button>
+      </div>
+      <div class="note-slot note-slot--2" style="--x:75px;--y:73px;--cord:65px;--tag-width:28px;--angle:4deg;--duration:6.86s;--delay:-1.46s">
+        <button class="note-trigger" type="button" data-note-id="star" data-angle="4"><span class="note-small">快乐不限量</span></button>
+      </div>
+      <div class="note-slot note-slot--3" style="--x:120px;--y:59px;--cord:41px;--tag-width:26px;--angle:-4deg;--duration:7.09s;--delay:-2.19s">
+        <button class="note-trigger" type="button" data-note-id="rich" data-angle="-4"><span class="note-small">愿好运偏爱你</span></button>
+      </div>
+      <div class="note-slot note-slot--4" style="--x:168px;--y:69px;--cord:83px;--tag-width:29px;--angle:3deg;--duration:7.32s;--delay:-2.92s">
+        <button class="note-trigger" type="button" data-note-id="pause" data-angle="3"><span class="note-small">允许暂停一下</span></button>
+      </div>
+      <div class="note-slot note-slot--5" style="--x:217px;--y:64px;--cord:46px;--tag-width:28px;--angle:-4deg;--duration:7.55s;--delay:-3.65s">
+        <button class="note-trigger" type="button" data-note-id="report" data-angle="-4"><span class="note-small">寿星优先</span></button>
+      </div>
+      <div class="note-slot note-slot--6" style="--x:265px;--y:63px;--cord:71px;--tag-width:28px;--angle:4deg;--duration:7.78s;--delay:-4.38s">
+        <button class="note-trigger" type="button" data-note-id="secret" data-angle="4"><span class="note-small">暂停营业</span></button>
+      </div>
+      <div class="note-slot note-slot--7" style="--x:310px;--y:78px;--cord:39px;--tag-width:28px;--angle:-3deg;--duration:8.01s;--delay:-5.11s">
+        <button class="note-trigger" type="button" data-note-id="quiet" data-angle="-3"><span class="note-small">不用总说还好</span></button>
+      </div>
+      <div class="note-slot note-slot--8" style="--x:357px;--y:64px;--cord:28px;--tag-width:26px;--angle:5deg;--duration:8.24s;--delay:-5.84s">
+        <button class="note-trigger" type="button" data-note-id="surprise" data-angle="5"><span class="note-small">也别忘了自己</span></button>
+      </div>
+      </div>
+      <div class="character" id="birthday-character" role="img" aria-label="女生直立从右侧探出半个身子，双手扒住右边缘，抬头好奇地望着枝头的生辰笺">
+        <div class="actor"><div class="actor-frames">
+          <img class="actor-pose is-current" data-pose="peek" src="assets/straight-hair/peek.webp" width="983" height="1600" alt="" decoding="async" fetchpriority="high">
+        </div></div>
+      </div>
+      <div class="petals" aria-hidden="true">
+        <span style="--px:42px;--py:101px;--drift:26px;--fall:440px;--time:17s;--wait:-3s;--turn:32deg"><img src="assets/petal.webp" alt=""></span>
+        <span style="--px:316px;--py:113px;--drift:-28px;--fall:350px;--time:20s;--wait:-12s;--turn:-52deg"><img src="assets/petal.webp" alt=""></span>
+        <span style="--px:93px;--py:173px;--drift:35px;--fall:420px;--time:23s;--wait:-18s;--turn:75deg"><img src="assets/petal.webp" alt=""></span>
+        <span style="--px:278px;--py:203px;--drift:24px;--fall:340px;--time:21s;--wait:-7s;--turn:110deg"><img src="assets/petal.webp" alt=""></span>
+      </div>
+      <div class="scene-footer">
+        <h1 class="ending-wish" id="birthday-title" tabindex="-1" hidden><span>生辰喜乐，岁岁安宁。</span><span>愿前路明朗，诸事顺遂。</span></h1>
+        <p class="scene-hint" id="scene-hint">点开纸笺，拖动翻面</p>
+      </div>
+    </div>
+    <span id="note-count" class="visually-hidden" role="status" aria-live="polite"></span>
+    <noscript><p class="no-script-wish">请启用 JavaScript 后，点开枝头纸笺。</p></noscript>
+  </main>
+  <template id="paper-note-template">
+    <div class="paper-note">
+      <div class="note-face note-front">
+        <img class="note-paper" src="assets/paper-blank.webp" width="724" height="2172" alt="" draggable="false" decoding="async">
+        <div class="note-writing note-writing--front"><div class="note-content"><span class="note-label"></span><span class="note-small"></span></div></div>
+      </div>
+      <div class="note-face note-back" aria-hidden="true">
+        <img class="note-paper" src="assets/paper-blank.webp" width="724" height="2172" alt="" draggable="false" decoding="async">
+        <div class="note-writing note-writing--back"><div class="back-content">
+          <p class="back-eyebrow">翻过来才知道</p>
+          <p class="note-back-text"></p>
+          <p class="back-signature">给你的小小偏爱</p>
+        </div></div>
+      </div>
+    </div>
+  </template>
+  <dialog id="note-dialog" aria-describedby="note-front-text note-gesture-hint">
+    <button id="note-dimmer" class="note-dimmer" type="button" tabindex="-1" aria-label="收下当前纸笺"></button>
+    <div class="note-stage">
+      <div id="note-flight" tabindex="0" role="group" aria-label="生辰笺，左右拖动或按左右方向键翻面" aria-describedby="note-gesture-hint">
+        <div id="note-flipper" class="paper-note paper-note--expanded"></div>
+        <div id="note-physical" aria-hidden="true" hidden></div>
+      </div>
+      <p id="note-gesture-hint" class="note-gesture-hint" role="status">左右拖动纸笺，翻到背面</p>
+      <div class="note-actions"><button id="note-close" type="button">收下这张</button></div>
+    </div>
+  </dialog>
+</body>
+</html>
