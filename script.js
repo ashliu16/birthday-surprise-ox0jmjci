@@ -108,10 +108,63 @@
     const collected = new Set();
     const scene = document.querySelector('.scene');
     const art = document.getElementById('scene-art');
+    const background = art.querySelector('.scene-background');
+    const petals = art.querySelector('.petals');
+    const slots = [...grid.querySelectorAll('.note-slot')].map(slot => ({
+      slot, cord: Number.parseFloat(slot.style.getPropertyValue('--cord')),
+    }));
+    const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
+    let layout = null;
+    let actor = null;
     const layoutScene = () => {
-      const scale = scene.clientWidth / 390;
-      art.style.transform = `scale(${scale})`;
+      if (!CSS.supports('height:100dvh')) {
+        scene.style.height = `${Math.max(280, window.visualViewport?.height || innerHeight)}px`;
+      }
+      const width = scene.clientWidth, height = scene.clientHeight;
+      const style = getComputedStyle(scene);
+      const safeTop = Number.parseFloat(style.paddingTop) || 0;
+      const safeBottom = Number.parseFloat(style.paddingBottom) || 0;
+      const safeLeft = Number.parseFloat(style.paddingLeft) || 0;
+      const safeRight = Number.parseFloat(style.paddingRight) || 0;
+      const availableWidth = width - safeLeft - safeRight;
+      const landscape = width >= 480 && width > height * 1.15;
+      const compact = !landscape && height / width < 1.75;
+      const cordFactor = landscape ? 1 : clamp((height / width - 1.3) / .45, .5, 1);
+      const paperWidth = landscape ? Math.min(availableWidth * .59, (height - safeTop - 32) * 1.25, 480) : availableWidth;
+      const scale = paperWidth / 390;
+      const paperLeft = safeLeft;
+      const paperTop = Math.max(0, safeTop - 28);
+      const figureLeft = landscape ? paperLeft + paperWidth + 12 : safeLeft;
+      const figureRight = width - safeRight;
+      const centerX = (figureLeft + figureRight) / 2;
+      const footerWidth = Math.max(150, figureRight - figureLeft - 32);
+      const footerFont = Math.min(22, width * .055, footerWidth / (11 * 1.08));
+      const footerBottom = safeBottom + (compact || landscape ? 12 : 24);
+      const groundY = height - footerBottom - footerFont * 1.85 * 2 - (compact || landscape ? 18 : 28);
+      const rightTagBottom = (79 + 76 * cordFactor + 70) * scale + paperTop;
+      const maxBodyHeight = landscape ? groundY - safeTop - 14 : groundY - rightTagBottom - 12;
+      const bodyHeight = Math.max(130, Math.min(landscape ? height * .62 : clamp(height * .43, 255, 390), maxBodyHeight));
+      layout = { width, height, safeTop, safeBottom, safeLeft, safeRight, landscape,
+        paperLeft, paperTop, paperWidth, paperScale: scale, figureLeft, figureRight,
+        centerX, groundY, actorFactor: bodyHeight / 350, edgeX: figureRight };
+      scene.dataset.layout = landscape ? 'landscape' : 'portrait';
       art.style.setProperty('--scene-scale', scale);
+      art.style.setProperty('--footer-left', `${figureLeft + 16}px`);
+      art.style.setProperty('--footer-width', `${footerWidth}px`);
+      art.style.setProperty('--footer-font', `${footerFont}px`);
+      art.style.setProperty('--footer-bottom', `${footerBottom}px`);
+      background.style.width = `${paperWidth}px`;
+      background.style.left = `${paperLeft}px`;
+      background.style.top = `${paperTop}px`;
+      const paperTransform = `translate3d(${paperLeft}px,${paperTop}px,0) scale(${scale})`;
+      grid.style.transform = paperTransform;
+      petals.style.transform = paperTransform;
+      petals.style.height = `${height / scale}px`;
+      slots.forEach(({ slot, cord }) => slot.style.setProperty('--cord', `${cord * cordFactor}px`));
+      dialog.dataset.layout = scene.dataset.layout;
+      const noteHeight = Math.max(150, height - safeTop - safeBottom - (landscape ? 64 : 150));
+      dialog.style.setProperty('--note-width', `${Math.min(210, innerWidth * (landscape ? .4 : .64), noteHeight / 2.5)}px`);
+      actor?.layout(layout);
     };
     new ResizeObserver(layoutScene).observe(scene);
     layoutScene();
@@ -135,7 +188,7 @@
     let enginePromise = null;
     let selection = 0;
     let approaching = 0;
-    const actor = window.BirthdayCharacter?.create(document.getElementById('birthday-character'));
+    actor = window.BirthdayCharacter?.create(document.getElementById('birthday-character'), layout);
 
     function hasPhysical() { return physicalWanted && physicalReady && physicalAvailable; }
 
@@ -389,8 +442,10 @@
 
     function resetNoteGridPosition() {
       // Older WebViews may scroll overflow:hidden while focusing an edge note.
-      if (grid.scrollLeft !== 0) grid.scrollLeft = 0;
-      if (grid.scrollTop !== 0) grid.scrollTop = 0;
+      for (const element of [scene, grid]) {
+        if (element.scrollLeft !== 0) element.scrollLeft = 0;
+        if (element.scrollTop !== 0) element.scrollTop = 0;
+      }
     }
 
     function releasePointer() {
@@ -458,16 +513,16 @@
 
     async function requestOpen(trigger, instant = false) {
       if ((state !== 'idle' && state !== 'approaching') || dialog.hasAttribute('open') || trigger.hidden) return;
+      resetNoteGridPosition();
       const request = ++approaching;
       if (actor) {
         setState('approaching');
         triggers.forEach(note => note.closest('.note-slot').classList.toggle('is-targeted', note === trigger));
         const bounds = trigger.querySelector('.paper-note').getBoundingClientRect();
         const sceneBounds = art.getBoundingClientRect();
-        const scale = scene.clientWidth / 390;
         const target = { id: trigger.dataset.noteId,
-          x: (bounds.left + bounds.width / 2 - sceneBounds.left) / scale,
-          y: (bounds.bottom - sceneBounds.top) / scale - 3 };
+          x: bounds.left + bounds.width / 2 - sceneBounds.left,
+          y: bounds.bottom - sceneBounds.top - 3 };
         const arrived = await actor.reach(target, { instant });
         if (!arrived || request !== approaching || state !== 'approaching') return;
       }
@@ -492,7 +547,7 @@
       scene.classList.add('is-breeze-paused');
       const sourcePaper = trigger.querySelector('.paper-note');
       const sourceRect = sourcePaper.getBoundingClientRect();
-      const sceneScale = scene.clientWidth / 390;
+      const sceneScale = layout.paperScale;
       const sourceWidth = sourcePaper.offsetWidth * sceneScale || sourceRect.width;
       const sourceHeight = sourcePaper.offsetHeight * sceneScale || sourceRect.height;
       const transform = getComputedStyle(trigger.closest('.note-slot')).transform;
@@ -718,6 +773,7 @@
       // Locking body scroll may widen visualViewport by the scrollbar width.
       // That must not dismiss a note on a short screen.
       if (changed && state !== 'idle') finishClose();
+      if (changed) layoutScene();
     };
     window.addEventListener('resize', onResize);
     window.visualViewport?.addEventListener('resize', onResize);

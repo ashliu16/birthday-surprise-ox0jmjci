@@ -10,14 +10,26 @@
         "width": 512,
         "height": 768,
         "anchorX": 250,
-        "anchorY": 704
+        "anchorY": 704,
+        "bounds": [
+            101,
+            130,
+            392,
+            705
+        ]
     },
     "walk-b": {
         "src": "assets/character-walk-b-v13.webp",
         "width": 512,
         "height": 768,
         "anchorX": 250,
-        "anchorY": 678
+        "anchorY": 678,
+        "bounds": [
+            130,
+            109,
+            382,
+            679
+        ]
     },
     "reach-left": {
         "src": "assets/character-reach-left-v13.webp",
@@ -26,7 +38,13 @@
         "anchorX": 280,
         "anchorY": 706,
         "handX": 128,
-        "handY": 71
+        "handY": 71,
+        "bounds": [
+            113,
+            71,
+            367,
+            707
+        ]
     },
     "reach-low": {
         "src": "assets/character-reach-low-v13.webp",
@@ -35,7 +53,13 @@
         "anchorX": 285,
         "anchorY": 726,
         "handX": 140,
-        "handY": 110
+        "handY": 110,
+        "bounds": [
+            126,
+            110,
+            395,
+            727
+        ]
     },
     "reach-right": {
         "src": "assets/character-reach-right-v13.webp",
@@ -44,7 +68,13 @@
         "anchorX": 270,
         "anchorY": 727,
         "handX": 369,
-        "handY": 69
+        "handY": 69,
+        "bounds": [
+            152,
+            69,
+            386,
+            728
+        ]
     },
     "tiptoe-left": {
         "src": "assets/character-tiptoe-left-v13.webp",
@@ -53,7 +83,13 @@
         "anchorX": 265,
         "anchorY": 693,
         "handX": 130,
-        "handY": 20
+        "handY": 20,
+        "bounds": [
+            116,
+            20,
+            400,
+            694
+        ]
     },
     "tiptoe-right": {
         "src": "assets/character-tiptoe-right-v13.webp",
@@ -62,7 +98,13 @@
         "anchorX": 270,
         "anchorY": 694,
         "handX": 396,
-        "handY": 21
+        "handY": 21,
+        "bounds": [
+            121,
+            21,
+            411,
+            695
+        ]
     },
     "peek": {
         "src": "assets/character-peek-v13.webp",
@@ -71,7 +113,13 @@
         "anchorX": 830,
         "anchorY": 1450,
         "scale": 0.265,
-        "gripX": 944
+        "gripX": 944,
+        "bounds": [
+            636,
+            157,
+            944,
+            1451
+        ]
     },
     "idle-left": {
         "src": "assets/character-idle-v13.webp",
@@ -80,7 +128,13 @@
         "anchorX": 300,
         "anchorY": 711,
         "scale": 0.53,
-        "flipX": true
+        "flipX": true,
+        "bounds": [
+            186,
+            49,
+            425,
+            712
+        ]
     },
     "idle-right": {
         "src": "assets/character-idle-v13.webp",
@@ -89,7 +143,13 @@
         "anchorX": 300,
         "anchorY": 711,
         "scale": 0.53,
-        "flipX": false
+        "flipX": false,
+        "bounds": [
+            186,
+            49,
+            425,
+            712
+        ]
     },
     "finished": {
         "src": "assets/character-finished-cool-v12.webp",
@@ -97,7 +157,13 @@
         "height": 1536,
         "anchorX": 517,
         "anchorY": 1498,
-        "scale": 0.23828125
+        "scale": 0.23828125,
+        "bounds": [
+            256,
+            10,
+            851,
+            1498
+        ]
     }
 };
   const TARGETS = {
@@ -106,7 +172,7 @@
   };
   const EASE = 'cubic-bezier(.23,1,.32,1)';
 
-  function create(root) {
+  function create(root, initialLayout) {
     if (!root) return null;
     const actor = root.querySelector('.actor');
     const frames = root.querySelector('.actor-frames');
@@ -114,16 +180,51 @@
     const images = new Map(), ready = new Map();
     let revision = 0, movement = null, toeLift = null, strideTimer = 0;
     let position = { x: 390, y: 610 }, pose = 'peek', restPose = 'idle-left';
+    let metrics = null, factor = 1;
 
-    function alignEdge() {
-      const bounds = root.parentElement.getBoundingClientRect();
-      const sceneScale = bounds.width / 390;
-      const edge = window.innerWidth <= 600
-        ? (window.innerWidth - bounds.left) / sceneScale : 390;
-      root.style.setProperty('--actor-edge', `${edge}px`);
-      if (root.dataset.activity === 'peek' || !root.dataset.activity) {
-        const data = POSES.peek;
-        place(edge - (data.gripX - data.anchorX) * (data.scale || SCALE), 610);
+    function sizeImage(img, name) {
+      const data = POSES[name];
+      const scale = (data.scale || SCALE) * factor;
+      img.style.width = `${data.width * scale}px`;
+      img.style.height = `${data.height * scale}px`;
+      img.style.left = `${-data.anchorX * scale}px`;
+      img.style.top = `${-data.anchorY * scale}px`;
+      img.style.transformOrigin = `${data.anchorX * scale}px ${data.anchorY * scale}px`;
+    }
+
+    function sizeAll(nextFactor) {
+      factor = nextFactor;
+      for (const [name, img] of images) sizeImage(img, name);
+      root.dataset.scale = factor.toFixed(3);
+    }
+
+    function fitX(name, x) {
+      const data = POSES[name], scale = (data.scale || SCALE) * factor;
+      let left = data.bounds[0] - data.anchorX, right = data.bounds[2] - data.anchorX;
+      if (data.flipX) [left, right] = [-right, -left];
+      const minimum = (metrics.landscape ? metrics.figureLeft : metrics.safeLeft) + 8 - left * scale;
+      const maximum = metrics.figureRight - 8 - right * scale;
+      return Math.max(minimum, Math.min(maximum, x));
+    }
+
+    function layout(next) {
+      if (metrics && ['width', 'height', 'actorFactor', 'groundY', 'centerX', 'edgeX'].every(key => metrics[key] === next[key])) return;
+      cancel();
+      metrics = next;
+      sizeAll(next.actorFactor);
+      root.style.setProperty('--actor-edge', `${next.edgeX}px`);
+      root.dataset.layout = next.landscape ? 'landscape' : 'portrait';
+      if (pose === 'peek') {
+        const data = POSES.peek, scale = (data.scale || SCALE) * factor;
+        show('peek', 'peek');
+        place(next.edgeX - (data.gripX - data.anchorX) * scale, next.groundY);
+      } else if (pose === 'finished') {
+        place(fitX('finished', next.centerX), next.groundY);
+      } else {
+        const name = position.x < next.centerX ? 'idle-right' : 'idle-left';
+        void load(name);
+        show(name, 'waiting'); restPose = name;
+        place(fitX(name, next.landscape ? next.centerX : position.x), next.groundY);
       }
     }
 
@@ -131,15 +232,10 @@
       if (images.has(name)) return images.get(name);
       const data = POSES[name];
       const img = root.querySelector(`[data-pose="${name}"]`) || new Image();
-      const scale = data.scale || SCALE;
       img.className = 'actor-pose'; img.dataset.pose = name;
       img.alt = ''; img.draggable = false; img.decoding = 'async';
       img.width = data.width; img.height = data.height;
-      img.style.width = `${data.width * scale}px`;
-      img.style.height = `${data.height * scale}px`;
-      img.style.left = `${-data.anchorX * scale}px`;
-      img.style.top = `${-data.anchorY * scale}px`;
-      img.style.transformOrigin = `${data.anchorX * scale}px ${data.anchorY * scale}px`;
+      sizeImage(img, name);
       if (data.flipX) img.style.transform = 'scaleX(-1)';
       if (!img.parentElement) frames.append(img);
       images.set(name, img);
@@ -210,11 +306,32 @@
 
     async function reach(target, { instant = false } = {}) {
       const token = cancel();
-      const name = TARGETS[target.id] || 'reach-left';
+      const high = target.id === 'birthday' || target.id === 'surprise';
+      const name = metrics.landscape ? high ? 'tiptoe-left' : target.id === 'pause' ? 'reach-low' : 'reach-left'
+        : TARGETS[target.id] || 'reach-left';
       const data = POSES[name];
-      const scale = data.scale || SCALE;
-      const x = target.x - (data.handX - data.anchorX) * scale;
-      const y = target.y - (data.handY - data.anchorY) * scale;
+      const base = data.scale || SCALE;
+      const bounds = data.bounds;
+      let nextFactor = metrics.actorFactor;
+      if (metrics.landscape) {
+        nextFactor = Math.min(nextFactor,
+          (metrics.groundY - metrics.safeTop - 12) / ((data.anchorY - bounds[1]) * base),
+          (metrics.figureRight - metrics.figureLeft - 16) / ((bounds[2] - bounds[0]) * base));
+      } else {
+        nextFactor = Math.min(nextFactor,
+          (metrics.height - metrics.safeBottom - 48 - target.y) / ((bounds[3] - data.handY) * base));
+        if (data.handX > bounds[0]) nextFactor = Math.min(nextFactor,
+          (target.x - metrics.safeLeft - 6) / ((data.handX - bounds[0]) * base));
+        if (bounds[2] > data.handX) nextFactor = Math.min(nextFactor,
+          (metrics.figureRight - 6 - target.x) / ((bounds[2] - data.handX) * base));
+      }
+      sizeAll(Math.max(.2, nextFactor));
+      const scale = base * factor;
+      // Landscape keeps the full girl beside the tree and gestures toward it.
+      const x = metrics.landscape
+        ? fitX(name, metrics.centerX + ((target.x - metrics.paperLeft) / metrics.paperWidth - .5) * 36)
+        : target.x - (data.handX - data.anchorX) * scale;
+      const y = metrics.landscape ? metrics.groundY : target.y - (data.handY - data.anchorY) * scale;
       root.dataset.target = target.id;
       root.dataset.tiptoe = String(name.startsWith('tiptoe'));
       root.dataset.activity = 'preparing';
@@ -227,7 +344,7 @@
         const walking = await Promise.all([load('walk-a'), load('walk-b'), load('idle-left'), load('idle-right')]);
         if (token !== revision) return false;
         if (walking.every(Boolean)) {
-          restPose = x < 195 ? 'idle-right' : 'idle-left';
+          restPose = x < metrics.centerX ? 'idle-right' : 'idle-left';
           root.classList.add('is-walking');
           root.classList.toggle('is-facing-right', x > position.x);
           show('walk-a', 'walking');
@@ -256,9 +373,10 @@
 
     async function rest({ instant = false } = {}) {
       const token = cancel();
-      const x = Math.max(85, Math.min(305, position.x));
-      const y = Math.max(590, Math.min(620, position.y));
-      const name = x < 195 ? 'idle-right' : 'idle-left';
+      sizeAll(metrics.actorFactor);
+      const name = metrics.landscape || position.x >= metrics.centerX ? 'idle-left' : 'idle-right';
+      const x = fitX(name, metrics.landscape ? metrics.centerX : position.x);
+      const y = metrics.groundY;
       if (!await load(name) || token !== revision) return;
       show(name, 'waiting'); restPose = name;
       root.setAttribute('aria-label', '女生收好祝福，又好奇地抬头望向剩下的纸笺');
@@ -268,21 +386,20 @@
     async function finish({ instant = false } = {}) {
       const token = cancel();
       if (!await load('finished') || token !== revision) return;
+      sizeAll(metrics.actorFactor);
       show('finished', 'complete'); restPose = 'finished';
       root.setAttribute('aria-label', '所有生辰笺都已收下，女生面向前方，戴上墨镜，左手斜向上比耶');
       delete root.dataset.target; delete root.dataset.tiptoe;
-      await travel(199, 612, token, reduced.matches || instant ? 0 : 300);
+      await travel(fitX('finished', metrics.centerX), metrics.groundY, token, reduced.matches || instant ? 0 : 300);
     }
 
-    alignEdge(); show('peek', 'peek');
-    window.addEventListener('resize', alignEdge, { passive: true });
-    new ResizeObserver(alignEdge).observe(root.closest('.scene'));
+    layout(initialLayout);
     void load('peek');
     const warm = () => Object.keys(POSES).forEach(name => void load(name));
     if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 1200 });
     else window.setTimeout(warm, 400);
 
-    return { reach, rest, finish, cancel };
+    return { reach, rest, finish, cancel, layout };
   }
 
   window.BirthdayCharacter = { create };
