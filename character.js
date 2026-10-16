@@ -273,8 +273,11 @@
 
     function currentPosition() {
       if (!movement) return position;
-      const matrix = new DOMMatrixReadOnly(getComputedStyle(actor).transform);
-      return { x: matrix.m41, y: matrix.m42 };
+      const transform = getComputedStyle(actor).transform;
+      const values = transform.match(/^matrix(3d)?\(([^)]+)\)$/);
+      if (!values) return position;
+      const parts = values[2].split(',').map(Number);
+      return values[1] ? { x: parts[12], y: parts[13] } : { x: parts[4], y: parts[5] };
     }
 
     function cancel() {
@@ -292,13 +295,36 @@
 
     async function travel(x, y, token, duration, easing = EASE) {
       const start = currentPosition();
-      if (reduced.matches || duration === 0 || typeof actor.animate !== 'function') { place(x, y); return token === revision; }
-      movement = actor.animate([
-        { transform: `translate3d(${start.x}px,${start.y}px,0)` },
-        { transform: `translate3d(${x}px,${y}px,0)` },
-      ], { duration, easing, fill: 'forwards' });
+      if (reduced.matches || duration === 0) { place(x, y); return token === revision; }
+      if (typeof actor.animate === 'function') {
+        movement = actor.animate([
+          { transform: `translate3d(${start.x}px,${start.y}px,0)` },
+          { transform: `translate3d(${x}px,${y}px,0)` },
+        ], { duration, easing, fill: 'forwards' });
+      } else {
+        // Older WebViews still get visible movement using CSS transitions.
+        let resolveFinished, timeout;
+        const finished = new Promise(resolve => { resolveFinished = resolve; });
+        const clean = () => {
+          clearTimeout(timeout);
+          actor.removeEventListener('transitionend', onEnd);
+          actor.style.transition = '';
+        };
+        const complete = () => { clean(); resolveFinished(true); };
+        const onEnd = event => {
+          if (event.target === actor && event.propertyName === 'transform') complete();
+        };
+        actor.style.transition = 'none';
+        place(start.x, start.y);
+        void actor.offsetWidth;
+        movement = { finished, cancel() { clean(); resolveFinished(false); } };
+        actor.addEventListener('transitionend', onEnd);
+        actor.style.transition = `transform ${duration}ms ${easing}`;
+        actor.style.transform = `translate3d(${x}px,${y}px,0)`;
+        timeout = window.setTimeout(complete, duration + 100);
+      }
       const animation = movement;
-      const complete = await animation.finished.then(() => true, () => false);
+      const complete = await animation.finished.then(result => result !== false, () => false);
       if (!complete || token !== revision) return false;
       place(x, y);
       animation.cancel(); movement = null;
@@ -340,7 +366,7 @@
       if (token !== revision) return false;
       if (!available) return true; // Optional artwork cannot block reading a wish.
       const distance = Math.hypot(x - position.x, y - position.y);
-      const immediate = instant || reduced.matches || typeof actor.animate !== 'function';
+      const immediate = instant || reduced.matches;
       let walkingVisible = false;
       if (!immediate && distance > 14) {
         const walking = await Promise.all([load('walk-a'), load('walk-b'), load('idle-left'), load('idle-right')]);
@@ -367,7 +393,7 @@
       root.setAttribute('aria-label', name.startsWith('tiptoe')
         ? '女生走到纸笺下面，踮起脚尖伸手去摘高处的祝福'
         : '女生走到所选纸笺下面，抬头伸手去摘祝福');
-      if (immediate) return token === revision;
+      if (immediate || typeof frames.animate !== 'function') return token === revision;
       const durationReach = name.startsWith('tiptoe') ? 300 : 180;
       toeLift = frames.animate(name.startsWith('tiptoe') ? [
         { transform: 'translateY(3px)' }, { transform: 'translateY(-4px)', offset: .55 }, { transform: 'translateY(0)' },

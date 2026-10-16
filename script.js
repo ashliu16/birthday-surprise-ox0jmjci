@@ -84,11 +84,18 @@
       trigger.setAttribute('aria-label', message[0]);
       trigger.setAttribute('aria-controls', 'note-dialog');
       trigger.setAttribute('aria-expanded', 'false');
+      // A click count of zero also occurs with non-keyboard activation.
+      // Only an actual key event should bypass the character's walking phase.
+      trigger.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        if (!event.repeat) requestOpen(trigger, true);
+      });
       trigger.addEventListener('click', (event) => {
         // Slender hanging tags need generous finger targets. Where those targets
         // overlap, select the paper nearest the actual touch, rather than DOM order.
         let chosen = trigger;
-        if (event.detail > 0) {
+        if (event.clientX !== 0 || event.clientY !== 0) {
           let nearest = Infinity;
           for (const candidate of triggers) {
             if (candidate.hidden) continue;
@@ -99,7 +106,7 @@
             if (distance < nearest) { nearest = distance; chosen = candidate; }
           }
         }
-        requestOpen(chosen, event.detail === 0);
+        requestOpen(chosen);
       });
     });
 
