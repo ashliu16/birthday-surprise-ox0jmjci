@@ -1,5 +1,5 @@
-/* Whole-character poses are model-generated artwork. This controller only
-   places those images and times the scene's interactive movements. */
+/* Walking/reaching use complete illustration poses. The finished pose keeps
+   one fixed texture and only deforms its head, hair tips and skirt slightly. */
 (() => {
   'use strict';
 
@@ -107,18 +107,18 @@
         ]
     },
     "peek": {
-        "src": "assets/character-peek-v13.webp",
-        "width": 944,
-        "height": 1536,
-        "anchorX": 830,
-        "anchorY": 1450,
-        "scale": 0.265,
-        "gripX": 944,
+        "src": "assets/character-peek-v19.webp",
+        "width": 983,
+        "height": 1600,
+        "anchorX": 864.3,
+        "anchorY": 1536,
+        "scale": 0.24975,
+        "gripX": 983,
         "bounds": [
-            636,
-            157,
-            944,
-            1451
+            653,
+            164,
+            983,
+            1537
         ]
     },
     "idle-left": {
@@ -170,26 +170,7 @@
     birthday: 'tiptoe-left', star: 'reach-left', rich: 'reach-left', pause: 'reach-low',
     report: 'reach-right', secret: 'reach-right', quiet: 'reach-right', surprise: 'tiptoe-right',
   };
-  // Model-drawn whole figures. Runtime only changes their visibility.
-  const ENDING_SOURCES = [
-    'assets/character-ending-idle-v18-00.webp', 'assets/character-ending-idle-v18-01.webp',
-    'assets/character-ending-idle-v18-02.webp', 'assets/character-ending-idle-v18-03.webp',
-    'assets/character-ending-idle-v18-04.webp', 'assets/character-ending-idle-v18-05.webp',
-    'assets/character-ending-idle-v18-06.webp', 'assets/character-ending-idle-v18-07.webp',
-    'assets/character-ending-idle-v18-08.webp', 'assets/character-ending-idle-v18-09.webp',
-    'assets/character-ending-idle-v18-10.webp', 'assets/character-ending-idle-v18-11.webp',
-    'assets/character-ending-idle-v18-12.webp', 'assets/character-ending-idle-v18-13.webp',
-  ];
-  const ENDING_NAMES = ENDING_SOURCES.slice(1, 13).map((src, index) => {
-    const name = `ending-${index + 1}`;
-    POSES[name] = { src, width: 646, height: 828, anchorX: 297, anchorY: 594,
-      scale: 1, bounds: [215, 234, 390, 594] };
-    return name;
-  });
-  // A settled wind drawing is also the static/reduced-motion ending.
-  // Baseline 00/13 remain archived with the complete source sequence.
-  POSES.finished = { ...POSES['ending-11'] };
-  const isEndingPose = name => name === 'finished' || name.startsWith('ending-');
+  const isEndingPose = name => name === 'finished';
   const EASE = 'cubic-bezier(.23,1,.32,1)';
   // The stride keeps a steady rhythm, so its travel must keep a steady speed.
   const WALK_EASE = 'linear';
@@ -200,7 +181,8 @@
     const frames = root.querySelector('.actor-frames');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const images = new Map(), ready = new Map();
-    let revision = 0, movement = null, toeLift = null, strideTimer = 0, endingTimer = 0, endingGeneration = 0;
+    let revision = 0, movement = null, toeLift = null, strideTimer = 0;
+    let endingMotion = null, endingTried = false;
     let position = { x: 390, y: 610 }, pose = 'peek', restPose = 'idle-left';
     let metrics = null, factor = 1;
 
@@ -218,6 +200,7 @@
       factor = nextFactor;
       for (const [name, img] of images) sizeImage(img, name);
       root.dataset.scale = factor.toFixed(3);
+      endingMotion?.resize();
     }
 
     function fitX(name, x) {
@@ -318,26 +301,18 @@
     }
 
     function stopEndingMotion() {
-      endingGeneration++;
-      clearInterval(endingTimer); endingTimer = 0;
+      endingMotion?.stop();
       root.classList.remove('is-ending-breeze');
-      delete root.dataset.endingFrame;
     }
 
-    async function startEndingMotion(token) {
+    function startEndingMotion(token) {
       stopEndingMotion();
-      const generation = endingGeneration;
-      if (reduced.matches || document.hidden || !isEndingPose(pose)) return;
-      const loaded = await Promise.all(ENDING_NAMES.map(load));
-      if (generation !== endingGeneration || token !== revision || reduced.matches || document.hidden || !isEndingPose(pose) || !loaded.every(Boolean)) return;
-      root.classList.add('is-ending-breeze');
-      let frame = 0;
-      root.dataset.endingFrame = '0';
-      endingTimer = window.setInterval(() => {
-        frame = (frame + 1) % ENDING_NAMES.length;
-        show(ENDING_NAMES[frame], 'complete');
-        root.dataset.endingFrame = String(frame);
-      }, 467);
+      if (token !== revision || reduced.matches || document.hidden || !isEndingPose(pose)) return;
+      if (!endingTried) {
+        endingTried = true;
+        endingMotion = createEndingBreeze(root, frames, image('finished'));
+      }
+      if (endingMotion?.start()) root.classList.add('is-ending-breeze');
     }
 
     async function travel(x, y, token, duration, easing = EASE) {
@@ -467,7 +442,7 @@
       if (!await load('finished') || token !== revision) return;
       sizeAll(metrics.actorFactor);
       show('finished', 'complete'); restPose = 'finished';
-      root.setAttribute('aria-label', '所有生辰笺都已收下，女生面向前方戴墨镜比耶，轻轻摆头，发梢与裙边随风向左微动');
+      root.setAttribute('aria-label', '所有生辰笺都已收下，女生面向前方戴墨镜比耶，头部缓缓偏转很小的角度，发梢和裙边轻动');
       delete root.dataset.target; delete root.dataset.tiptoe;
       if (await travel(fitX('finished', metrics.centerX), metrics.groundY, token, reduced.matches || instant ? 0 : 300)) {
         void startEndingMotion(token);
@@ -493,6 +468,121 @@
     else window.setTimeout(warm, 400);
 
     return { reach, rest, finish, cancel, layout };
+  }
+
+  // Single-texture mesh: there are no alternate faces, opacity loops or
+  // periodically replaced images. A complete lean and return takes12seconds.
+  function createEndingBreeze(root, frames, source) {
+    const canvas = document.createElement('canvas');
+    canvas.className = 'actor-ending-surface';
+    canvas.setAttribute('aria-hidden', 'true');
+    let gl;
+    try { gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true,
+      antialias: true, depth: false, stencil: false }); } catch (_) { return null; }
+    if (!gl) { root.dataset.endingRenderer = 'static'; return null; }
+    const vertex = `
+      attribute vec2 a_uv;
+      uniform float u_time;
+      varying vec2 v_uv;
+      void main() {
+        v_uv = a_uv;
+        vec2 p = a_uv * vec2(1024.0,1536.0);
+        bool headRegion = p.y<370.0 && p.x>340.0 && p.x<655.0;
+        bool hairRegion = p.y>390.0 && p.y<635.0 && p.x>623.0 && p.x<680.0;
+        bool skirtRegion = p.y>665.0 && p.y<1342.0;
+        if(!headRegion && !hairRegion && !skirtRegion) {
+          gl_Position=vec4(a_uv.x*2.0-1.0,1.0-a_uv.y*2.0,0.0,1.0);
+          return;
+        }
+        float breeze = 0.5 - 0.5*cos(u_time*0.5235987756);
+        float angle = -0.0104719755*breeze;
+        float head = (1.0-smoothstep(300.0,370.0,p.y)) * smoothstep(340.0,385.0,p.x)
+          * (1.0-smoothstep(630.0,655.0,p.x));
+        vec2 neck = vec2(514.0,334.0);
+        vec2 d = p-neck;
+        vec2 tilted = vec2(cos(angle)*d.x-sin(angle)*d.y,
+                          sin(angle)*d.x+cos(angle)*d.y);
+        vec2 offset = (tilted-d)*head;
+        float hair = smoothstep(623.0,641.0,p.x)*(1.0-smoothstep(665.0,680.0,p.x))
+          * smoothstep(390.0,500.0,p.y)*(1.0-smoothstep(610.0,635.0,p.y));
+        offset.x -= 10.0*breeze*hair;
+        float skirt = smoothstep(665.0,1150.0,p.y)*(1.0-smoothstep(1320.0,1342.0,p.y));
+        float handGuard = 1.0-(1.0-smoothstep(374.0,400.0,p.x))
+          *(1.0-smoothstep(920.0,980.0,p.y));
+        skirt *= handGuard;
+        offset.x -= breeze*skirt*(7.0+2.0*sin(u_time*0.5235987756-p.x*0.008));
+        offset.y += breeze*skirt*2.5*sin(u_time*0.5235987756-p.x*0.012);
+        vec2 outPoint = a_uv+offset/vec2(1024.0,1536.0);
+        gl_Position = vec4(outPoint.x*2.0-1.0,1.0-outPoint.y*2.0,0.0,1.0);
+      }`;
+    const fragment = `precision mediump float; uniform sampler2D u_image;
+      varying vec2 v_uv; void main(){gl_FragColor=texture2D(u_image,v_uv);}`;
+    function shader(type, code) {
+      const result = gl.createShader(type);
+      gl.shaderSource(result, code); gl.compileShader(result);
+      if (!gl.getShaderParameter(result, gl.COMPILE_STATUS)) throw Error('Ending shader unavailable');
+      return result;
+    }
+    let program, timeLocation, indexCount;
+    try {
+      program = gl.createProgram();
+      gl.attachShader(program, shader(gl.VERTEX_SHADER, vertex));
+      gl.attachShader(program, shader(gl.FRAGMENT_SHADER, fragment));
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw Error('Ending program unavailable');
+      gl.useProgram(program);
+      const columns=72, rows=108, vertices=[], indices=[];
+      for(let y=0;y<=rows;y++) for(let x=0;x<=columns;x++) vertices.push(x/columns,y/rows);
+      for(let y=0;y<rows;y++) for(let x=0;x<columns;x++) {
+        const a=y*(columns+1)+x, b=a+columns+1;
+        indices.push(a,b,a+1,a+1,b,b+1);
+      }
+      const buffer=gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER,buffer); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.STATIC_DRAW);
+      const uv=gl.getAttribLocation(program,'a_uv'); gl.enableVertexAttribArray(uv); gl.vertexAttribPointer(uv,2,gl.FLOAT,false,0,0);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,gl.createBuffer());
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(indices),gl.STATIC_DRAW); indexCount=indices.length;
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,gl.createTexture());
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,source);
+      gl.uniform1i(gl.getUniformLocation(program,'u_image'),0);
+      timeLocation=gl.getUniformLocation(program,'u_time');
+      gl.clearColor(0,0,0,0); gl.disable(gl.DITHER);
+      gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+    } catch (_) { root.dataset.endingRenderer='static'; return null; }
+    frames.append(canvas);
+    root.dataset.endingRenderer='continuous';
+    let raf=0, seconds=0, lastTime=null, failed=false;
+    function draw() {
+      gl.uniform1f(timeLocation,seconds); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawElements(gl.TRIANGLES,indexCount,gl.UNSIGNED_SHORT,0);
+    }
+    function resize() {
+      for(const key of ['width','height','left','top']) canvas.style[key]=source.style[key];
+      // Supersample the fine pencil outlines even in a1x desktop preview.
+      const density=2;
+      const width=Math.max(1,Math.round(parseFloat(source.style.width)*density));
+      const height=Math.max(1,Math.round(parseFloat(source.style.height)*density));
+      if(canvas.width!==width||canvas.height!==height) {
+        canvas.width=width; canvas.height=height; gl.viewport(0,0,width,height);
+      }
+      if(!failed) draw();
+    }
+    function tick(now) {
+      if(failed)return;
+      if(lastTime!==null)seconds+=Math.min((now-lastTime)/1000,.05);
+      lastTime=now;draw();raf=requestAnimationFrame(tick);
+    }
+    function stop() {cancelAnimationFrame(raf);raf=0;lastTime=null;}
+    canvas.addEventListener('webglcontextlost',event=>{
+      event.preventDefault();failed=true;stop();
+      root.classList.remove('is-ending-breeze');root.dataset.endingRenderer='static';
+    });
+    return {resize,stop,start(){if(failed)return false;resize();stop();raf=requestAnimationFrame(tick);return true;}};
   }
 
   window.BirthdayCharacter = { create };
