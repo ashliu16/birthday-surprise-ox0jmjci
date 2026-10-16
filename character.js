@@ -6,30 +6,30 @@
   const SCALE = .60;
   const POSES = {
     "walk-a": {
-        "src": "assets/character-walk-a.webp",
+        "src": "assets/character-walk-a-v13.webp",
         "width": 512,
         "height": 768,
         "anchorX": 250,
-        "anchorY": 703
+        "anchorY": 704
     },
     "walk-b": {
-        "src": "assets/character-walk-b.webp",
+        "src": "assets/character-walk-b-v13.webp",
         "width": 512,
         "height": 768,
         "anchorX": 250,
-        "anchorY": 677
+        "anchorY": 678
     },
     "reach-left": {
-        "src": "assets/character-reach-left.webp",
+        "src": "assets/character-reach-left-v13.webp",
         "width": 512,
         "height": 768,
         "anchorX": 280,
-        "anchorY": 705,
+        "anchorY": 706,
         "handX": 128,
         "handY": 71
     },
     "reach-low": {
-        "src": "assets/character-reach-low.webp",
+        "src": "assets/character-reach-low-v13.webp",
         "width": 512,
         "height": 768,
         "anchorX": 285,
@@ -38,34 +38,34 @@
         "handY": 110
     },
     "reach-right": {
-        "src": "assets/character-reach-right.webp",
+        "src": "assets/character-reach-right-v13.webp",
         "width": 512,
         "height": 768,
         "anchorX": 270,
-        "anchorY": 726,
-        "handX": 368,
+        "anchorY": 727,
+        "handX": 369,
         "handY": 69
     },
     "tiptoe-left": {
-        "src": "assets/character-tiptoe-left.webp",
+        "src": "assets/character-tiptoe-left-v13.webp",
         "width": 512,
         "height": 768,
         "anchorX": 265,
-        "anchorY": 692,
-        "handX": 129,
-        "handY": 21
+        "anchorY": 693,
+        "handX": 130,
+        "handY": 20
     },
     "tiptoe-right": {
-        "src": "assets/character-tiptoe-right.webp",
+        "src": "assets/character-tiptoe-right-v13.webp",
         "width": 512,
         "height": 768,
         "anchorX": 270,
-        "anchorY": 693,
+        "anchorY": 694,
         "handX": 396,
         "handY": 21
     },
     "peek": {
-        "src": "assets/character-peek.webp",
+        "src": "assets/character-peek-v13.webp",
         "width": 944,
         "height": 1536,
         "anchorX": 830,
@@ -74,20 +74,20 @@
         "gripX": 944
     },
     "idle-left": {
-        "src": "assets/character-idle.webp",
+        "src": "assets/character-idle-v13.webp",
         "width": 512,
         "height": 768,
         "anchorX": 300,
-        "anchorY": 710,
+        "anchorY": 711,
         "scale": 0.53,
         "flipX": true
     },
     "idle-right": {
-        "src": "assets/character-idle.webp",
+        "src": "assets/character-idle-v13.webp",
         "width": 512,
         "height": 768,
         "anchorX": 300,
-        "anchorY": 710,
+        "anchorY": 711,
         "scale": 0.53,
         "flipX": false
     },
