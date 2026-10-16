@@ -47,7 +47,7 @@
       ],
       [
             "给你撑腰",
-            "你已经一个人扛了很多。\n在我这里，\n不用总说“还好”。\n想吐槽就说，我听着。"
+            "你已经一个人扛了很多。\n在我这里，\n不用总说\n“还好”。\n想吐槽就说，我听着。"
       ],
       [
             "日子琐琐碎碎",
@@ -61,7 +61,7 @@
       messageById.set(trigger.dataset.noteId, message);
       const caption = trigger.querySelector('.note-small')?.textContent || '';
       const paper = noteTemplate.content.firstElementChild.cloneNode(true);
-      paper.querySelector('.note-label').textContent = previews[index];
+      setVerticalTitle(paper.querySelector('.note-label'), previews[index]);
       paper.querySelector('.note-small').textContent = caption;
       paper.querySelector('.note-back-text').textContent = message[1];
       if (trigger.dataset.noteId === 'pause') {
@@ -89,7 +89,7 @@
       trigger.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
-        if (!event.repeat) requestOpen(trigger, true);
+        if (!event.repeat) requestOpen(trigger, true, true);
       });
       trigger.addEventListener('click', (event) => {
         // Slender hanging tags need generous finger targets. Where those targets
@@ -127,9 +127,9 @@
     let layout = null;
     let actor = null;
     const layoutScene = () => {
-      if (!CSS.supports('height:100dvh')) {
-        scene.style.height = `${Math.max(280, window.visualViewport?.height || innerHeight)}px`;
-      }
+      // Some in-app WebViews report dvh support but include their native bars.
+      scene.style.height = `${Math.max(280, window.visualViewport?.height || innerHeight)}px`;
+      document.body.style.minHeight = scene.style.height;
       const width = scene.clientWidth, height = scene.clientHeight;
       const style = getComputedStyle(scene);
       const safeTop = Number.parseFloat(style.paddingTop) || 0;
@@ -173,8 +173,13 @@
       petals.style.height = `${height / scale}px`;
       slots.forEach(({ slot, cord }) => slot.style.setProperty('--cord', `${cord * cordFactor}px`));
       dialog.dataset.layout = scene.dataset.layout;
-      const noteHeight = Math.max(150, height - safeTop - safeBottom - (landscape ? 64 : 150));
-      dialog.style.setProperty('--note-width', `${Math.min(210, innerWidth * (landscape ? .4 : .64), noteHeight / 2.5)}px`);
+      const readingHeight = height - safeTop - safeBottom;
+      const noteHeight = landscape ? Math.min(360, readingHeight - 40)
+        : Math.min(440, readingHeight - 128, Math.max(340, readingHeight * .58));
+      const noteWidth = Math.min(196, availableWidth * (landscape ? .4 : .56), noteHeight / 2.5);
+      dialog.style.height = `${height}px`;
+      dialog.style.setProperty('--reader-center-y', `${safeTop + readingHeight / 2}px`);
+      dialog.style.setProperty('--note-width', `${Math.max(24, noteWidth)}px`);
       actor?.layout(layout);
     };
     new ResizeObserver(layoutScene).observe(scene);
@@ -231,7 +236,7 @@
       if (!enginePromise) enginePromise = new Promise((resolve, reject) => {
         if (window.BirthdayPaper3D) { resolve(window.BirthdayPaper3D); return; }
         const script = document.createElement('script');
-        script.src = 'assets/birthday-paper-3d.js?v=shengchen-10';
+        script.src = 'assets/birthday-paper-3d.js?v=shengchen-20';
         script.async = true;
         script.onload = () => window.BirthdayPaper3D ? resolve(window.BirthdayPaper3D) : reject(new Error('Paper library unavailable'));
         script.onerror = () => reject(new Error('Paper library did not load'));
@@ -286,6 +291,16 @@
       }
     }
 
+    function setVerticalTitle(title, text) {
+      title.setAttribute('aria-label', text);
+      title.replaceChildren(...Array.from(text, char => {
+        const glyph = document.createElement('span');
+        glyph.className = 'note-glyph'; glyph.textContent = char;
+        glyph.setAttribute('aria-hidden', 'true');
+        return glyph;
+      }));
+    }
+
     function fitFrontWriting(writing) {
       if (!writing || writing.clientHeight < 1 || writing.clientWidth < 1) return;
       const title = writing.querySelector('.note-label');
@@ -293,21 +308,24 @@
       const tokens = getComputedStyle(writing);
       const titleMax = Number.parseFloat(tokens.getPropertyValue('--title-size')) || 19;
       const captionMax = Number.parseFloat(tokens.getPropertyValue('--caption-size')) || 14;
-      title.style.fontSize = `${titleMax}px`;
       caption.style.fontSize = `${captionMax}px`;
-      const height = writing.clientHeight - 2;
-      const captionVisible = getComputedStyle(caption).display !== 'none';
-      const captionMargin = captionVisible ? Number.parseFloat(getComputedStyle(caption).marginTop) || 0 : 0;
-      const gap = captionVisible ? Number.parseFloat(getComputedStyle(title.parentElement).columnGap) || 0 : 0;
-      const width = title.offsetWidth + (captionVisible ? caption.offsetWidth + gap : 0);
-      const ratio = Math.min(1, height / Math.max(title.scrollHeight, 1),
-        captionVisible ? (height - captionMargin) / Math.max(caption.scrollHeight, 1) : 1,
-        (writing.clientWidth - 2) / Math.max(width, 1));
-      title.style.fontSize = `${Math.floor(titleMax * ratio * 4) / 4}px`;
-      caption.style.fontSize = `${Math.floor(captionMax * ratio * 4) / 4}px`;
-      // Account for fractional font metrics across Android, iOS and desktop fonts.
-      while (title.scrollHeight > height && Number.parseFloat(title.style.fontSize) > 1) {
-        title.style.fontSize = `${Number.parseFloat(title.style.fontSize) - .25}px`;
+      // Horizontal glyph boxes avoid Safari's vertical-font/flex clipping.
+      // Reserve ink overhang instead of relying on a clipped scrollWidth.
+      const count = Math.max(1, Array.from(title.textContent).length);
+      const size = Math.min(titleMax, (writing.clientWidth - 2) / 1.12,
+        (writing.clientHeight - 10) / (count * 1.22));
+      title.style.fontSize = `${Math.max(1, Math.floor(size * 4) / 4)}px`;
+    }
+
+    function fitBackWriting(face) {
+      const writing = face?.querySelector('.note-writing--back');
+      const content = face?.querySelector('.back-content');
+      const body = face?.querySelector('.note-back-text');
+      if (!writing?.clientHeight || !content || !body) return;
+      body.style.fontSize = '';
+      let size = Number.parseFloat(getComputedStyle(body).fontSize);
+      while (content.scrollHeight > writing.clientHeight - 2 && size > 12) {
+        size = Math.max(12, size - .25); body.style.fontSize = `${size}px`;
       }
     }
 
@@ -320,6 +338,7 @@
     function setState(next) {
       state = next;
       dialog.dataset.state = next;
+      scene.classList.toggle('is-note-open', next !== 'idle' && next !== 'approaching');
       scene.setAttribute('aria-busy', String(next === 'approaching'));
       updateBreeze();
     }
@@ -522,8 +541,9 @@
       resetNoteGridPosition();
     }
 
-    async function requestOpen(trigger, instant = false) {
+    async function requestOpen(trigger, instant = false, keyboard = false) {
       if ((state !== 'idle' && state !== 'approaching') || dialog.hasAttribute('open') || trigger.hidden) return;
+      dialog.classList.toggle('is-keyboard', keyboard);
       resetNoteGridPosition();
       const request = ++approaching;
       if (actor) {
@@ -578,7 +598,7 @@
       frontText = frontFace.querySelector('.note-label');
       frontSmall = frontFace.querySelector('.note-small');
       backText = backFace.querySelector('.note-back-text');
-      frontText.textContent = front;
+      setVerticalTitle(frontText, front);
       frontText.id = 'note-front-text';
       frontText.setAttribute('role', 'heading');
       frontText.setAttribute('aria-level', '2');
@@ -613,6 +633,7 @@
       }
       document.body.style.overflow = 'hidden';
       fitFrontWriting(frontFace.querySelector('.note-writing--front'));
+      fitBackWriting(backFace);
       if (physicalWanted) void preparePhysical(trigger, capturePaperData(trigger));
       const centerRect = flight.getBoundingClientRect();
       const dx = sourceRect.left + sourceRect.width / 2 - centerRect.left - centerRect.width / 2;
@@ -747,6 +768,7 @@
       }
     });
     dialog.addEventListener('keydown', (event) => {
+      dialog.classList.add('is-keyboard');
       if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') &&
           (state === 'reading' || state === 'settling')) {
         event.preventDefault();
@@ -770,6 +792,7 @@
         flight.focus();
       }
     });
+    dialog.addEventListener('pointerdown', () => dialog.classList.remove('is-keyboard'), { passive: true });
 
     let viewportWidth = window.innerWidth;
     let viewportHeight = window.innerHeight;

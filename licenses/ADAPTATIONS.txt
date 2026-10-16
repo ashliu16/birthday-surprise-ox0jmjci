@@ -7,3 +7,5 @@ The rest of the paper renderer and gesture interaction is implemented for this s
 2026-10-15: Added the plum-branch scene, separately generated character/paper/cord/petal assets, and collection completion state. Physical paper aspect ratio is now 2.5 with matching canvas texture and camera geometry. The original Paperlab notices and Three/Motion licenses remain. Added a renamed LXGW WenKai subset under SIL OFL 1.1.
 
 2026-10-15: Added one independently generated plum blossom on the rest note. It uses a double-sided textured mesh sharing paper deformation and rotation, with front-side depth occlusion and disposal alongside the paper.
+
+2026-10-16: Physical front-title texture uses the DOM title's line factor, matching the explicit stacked-glyph layout used for mobile text containment. The bend deformation and original notices remain unchanged.

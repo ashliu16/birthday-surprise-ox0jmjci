@@ -35,3 +35,27 @@
 #note-dialog[data-layout="landscape"] .note-stage{top:calc((100% + env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))/2);left:calc(50% - 86px)}
 #note-dialog[data-layout="landscape"] .note-gesture-hint{top:calc(50% - 38px);left:calc(100% + 24px);width:148px;padding:0;white-space:normal;transform:none;text-align:center}
 #note-dialog[data-layout="landscape"] .note-actions{top:calc(50% + 12px);left:calc(100% + 24px);width:148px;transform:none;text-align:center}
+
+/* One horizontal glyph box per line: stable ink bounds in iOS/WeChat too. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.note-content{display:block;gap:0;padding:4px 0}
+.note-writing--front{inset:18% 16% 7%}
+.note-label{display:flex;flex-direction:column;align-items:center;width:100%;max-width:100%;min-width:0;writing-mode:horizontal-tb;text-orientation:mixed;line-height:1.22;letter-spacing:0;white-space:normal}
+.note-glyph{display:block;flex:none;width:100%;line-height:1.22;text-align:center;white-space:nowrap}
+.paper-note--expanded .note-writing--front{display:flex;align-items:center;justify-content:center}
+.paper-note--expanded .note-content{height:auto}
+.scene.is-note-open .scene-footer{visibility:hidden;pointer-events:none}
+
+/* Center the whole reading group, including its hint and finger-size button. */
+.note-stage{top:var(--reader-center-y,50%);left:50%;width:var(--note-width);height:auto;display:grid;grid-template-columns:var(--note-width);grid-template-rows:auto auto auto;gap:12px;align-content:center}
+#note-flight{width:var(--note-width);height:calc(var(--note-width)*2.5)}
+#note-flight:focus,#note-flight:focus-visible{outline:none}
+#note-dialog.is-keyboard #note-flight:focus-visible{outline:1px dashed var(--red);outline-offset:5px;border-radius:4px}
+.note-gesture-hint{position:static;top:auto;left:auto;width:max-content;max-width:calc(100vw - 48px);margin:0;padding:2px 8px;transform:none;justify-self:center;text-align:center;background:rgba(249,245,240,.96);white-space:nowrap;font-size:13px;line-height:18px}
+.note-actions{position:static;top:auto;left:auto;width:100%;margin:0;transform:none;text-align:center}
+.note-actions button{min-width:124px;min-height:44px;padding:9px 20px;font-size:16px}
+.note-back-text{font-size:clamp(14px,calc(var(--note-width)*.095),17px);line-height:1.65}
+#note-dialog[data-layout="landscape"] .note-stage{top:var(--reader-center-y,50%);left:50%;width:calc(var(--note-width) + 172px);grid-template-columns:var(--note-width) 148px;grid-template-rows:1fr 1fr;column-gap:24px;row-gap:12px}
+#note-dialog[data-layout="landscape"] #note-flight{grid-column:1;grid-row:1 / 3}
+#note-dialog[data-layout="landscape"] .note-gesture-hint{position:static;top:auto;left:auto;width:148px;transform:none;grid-column:2;grid-row:1;align-self:end;white-space:normal}
+#note-dialog[data-layout="landscape"] .note-actions{position:static;top:auto;left:auto;width:148px;transform:none;grid-column:2;grid-row:2;align-self:start}
