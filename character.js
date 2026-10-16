@@ -171,7 +171,8 @@
     report: 'reach-right', secret: 'reach-right', quiet: 'reach-right', surprise: 'tiptoe-right',
   };
   const EASE = 'cubic-bezier(.23,1,.32,1)';
-  const WALK_EASE = getComputedStyle(document.documentElement).getPropertyValue('--ease-in-out').trim() || EASE;
+  // The stride keeps a steady rhythm, so its travel must keep a steady speed.
+  const WALK_EASE = 'linear';
 
   function create(root, initialLayout) {
     if (!root) return null;
