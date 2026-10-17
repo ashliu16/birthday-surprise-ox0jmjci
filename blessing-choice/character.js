@@ -54,19 +54,19 @@
         "gripX": 983
     },
     "finished": {
-        "src": "assets/straight-hair/finished-proportion-v2.png",
+        "src": "assets/straight-hair/finished.webp",
         "width": 1024,
         "height": 1536,
         "anchorX": 517,
         "anchorY": 1498,
-        "scale": 0.24410541,
+        "scale": 0.24546722,
         "bounds": [
-            250,
-            9,
-            853,
-            1499
+            256,
+            10,
+            852,
+            1498
         ],
-        "crownY": 56
+        "crownY": 64
     },
     "walk-a": {
         "src": "assets/straight-hair/walk-a.webp",
@@ -521,19 +521,18 @@
       void main() {
         v_uv = a_uv;
         vec2 p = a_uv * vec2(1024.0,1536.0);
-        bool headRegion = p.y<410.0 && p.x>330.0 && p.x<655.0;
-        bool hairRegion = p.y>440.0 && p.y<670.0 && ((p.x>290.0 && p.x<390.0) || (p.x>600.0 && p.x<700.0));
-        bool skirtRegion = p.y>690.0 && p.y<1342.0;
+        bool headRegion = p.y<370.0 && p.x>340.0 && p.x<655.0;
+        bool hairRegion = p.y>410.0 && p.y<635.0 && ((p.x>300.0 && p.x<390.0) || (p.x>600.0 && p.x<690.0));
+        bool skirtRegion = p.y>665.0 && p.y<1342.0;
         if(!headRegion && !hairRegion && !skirtRegion) {
           gl_Position=vec4(a_uv.x*2.0-1.0,1.0-a_uv.y*2.0,0.0,1.0);
           return;
         }
         float breeze = 0.5 - 0.5*cos(u_time*0.5235987756);
         float angle = 0.1047197551*breeze;
-        // The larger head ends lower; fade at the new neck instead of the old chin.
-        float head = (1.0-smoothstep(332.0,410.0,p.y)) * smoothstep(330.0,370.0,p.x)
+        float head = (1.0-smoothstep(300.0,370.0,p.y)) * smoothstep(340.0,385.0,p.x)
           * (1.0-smoothstep(630.0,655.0,p.x));
-        vec2 neck = vec2(505.0,368.0);
+        vec2 neck = vec2(514.0,334.0);
         vec2 d = p-neck;
         vec2 tilted = vec2(cos(angle)*d.x-sin(angle)*d.y,
                           sin(angle)*d.x+cos(angle)*d.y);
@@ -541,19 +540,19 @@
         offset.y += 8.0*breeze*head;
         // Follow only the exposed hair beside the sleeves and arms.
         // Roots stay anchored; lower strands catch the same slow breeze slightly later.
-        float leftInner = mix(365.0,329.0,smoothstep(390.0,530.0,p.y));
-        leftInner = mix(leftInner,354.0,smoothstep(530.0,610.0,p.y));
-        float leftHair = smoothstep(290.0,309.0,p.x)
+        float leftInner = mix(371.0,331.0,smoothstep(360.0,500.0,p.y));
+        leftInner = mix(leftInner,358.0,smoothstep(500.0,570.0,p.y));
+        float leftHair = smoothstep(300.0,316.0,p.x)
           * (1.0-smoothstep(leftInner-8.0,leftInner-2.0,p.x))
-          * smoothstep(475.0,560.0,p.y) * (1.0-smoothstep(620.0,650.0,p.y));
-        float rightInner = mix(632.0,616.0,smoothstep(470.0,585.0,p.y));
+          * smoothstep(445.0,535.0,p.y) * (1.0-smoothstep(580.0,610.0,p.y));
+        float rightInner = mix(626.0,606.0,smoothstep(445.0,560.0,p.y));
         float rightHair = smoothstep(rightInner+2.0,rightInner+12.0,p.x)
-          * (1.0-smoothstep(685.0,700.0,p.x))
-          * smoothstep(440.0,550.0,p.y) * (1.0-smoothstep(640.0,670.0,p.y));
-        float hairBreeze = 0.5-0.5*cos(u_time*0.5235987756-(p.y-440.0)*0.0035);
+          * (1.0-smoothstep(675.0,690.0,p.x))
+          * smoothstep(410.0,525.0,p.y) * (1.0-smoothstep(605.0,635.0,p.y));
+        float hairBreeze = 0.5-0.5*cos(u_time*0.5235987756-(p.y-410.0)*0.0035);
         offset.x -= hairBreeze*(20.0*leftHair+22.0*rightHair);
         offset.y -= 2.5*hairBreeze*(leftHair+rightHair);
-        float skirt = smoothstep(690.0,1150.0,p.y)*(1.0-smoothstep(1320.0,1342.0,p.y));
+        float skirt = smoothstep(665.0,1150.0,p.y)*(1.0-smoothstep(1320.0,1342.0,p.y));
         float handGuard = 1.0-(1.0-smoothstep(374.0,400.0,p.x))
           *(1.0-smoothstep(920.0,980.0,p.y));
         skirt *= handGuard;
