@@ -56,7 +56,8 @@
   ]
 ];
     const previews = ["健康", "暴富", "漂亮", "事业", "自由", "好运", "元气", "心态"];
-    const healthGift = "咋把这个\n忘了？？\n\n行吧！\n请一定要\n拿上这个~";
+    // 补送健康时额外加的开场，后面仍接 messages 里的完整健康祝福。
+    const healthGift = "咋把这个\n忘了？？\n行吧！\n请一定要\n拿上这个~";
     const messageById = new Map();
     triggers.forEach((trigger, index) => {
       const message = messages[index % messages.length];
@@ -710,7 +711,7 @@
       // Its cord and pendulum stay in their own 2D coordinate system.
       const paperMatrix = getComputedStyle(sourcePaper).transform.match(/^matrix3d\(([^)]+)\)$/)?.[1].split(',').map(Number);
       const yaw = paperMatrix ? Math.atan2(-paperMatrix[2], paperMatrix[0]) * 180 / Math.PI : 0;
-      const [originalFront] = messageById.get(trigger.dataset.noteId);
+      const [originalFront, originalBack] = messageById.get(trigger.dataset.noteId);
       const front = originalFront;
       activeTrigger = trigger;
       originalVisibility = trigger.style.visibility;
@@ -724,7 +725,8 @@
       frontText = frontFace.querySelector('.note-label');
       frontSmall = frontFace.querySelector('.note-small');
       backText = backFace.querySelector('.note-back-text');
-      if (phase === 'surprise') backText.textContent = healthGift;
+      backText.textContent = phase === 'surprise'
+        ? `${healthGift}\n\n${originalBack}` : originalBack;
       setVerticalTitle(frontText, front);
       frontText.id = 'note-front-text';
       frontText.setAttribute('role', 'heading');
