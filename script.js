@@ -47,7 +47,7 @@
       ],
       [
             "给你撑腰",
-            "你已经一个人扛了很多。\n在我这里，\n不用总说\n“还好”。\n想吐槽就说，我听着。"
+            "你已经一个人\n扛了很多。\n在我这里，\n不用总说\n“还好”。\n想吐槽就说，\n我听着。"
       ],
       [
             "日子琐琐碎碎",
@@ -236,7 +236,7 @@
       if (!enginePromise) enginePromise = new Promise((resolve, reject) => {
         if (window.BirthdayPaper3D) { resolve(window.BirthdayPaper3D); return; }
         const script = document.createElement('script');
-        script.src = 'assets/birthday-paper-3d.js?v=shengchen-20';
+        script.src = 'assets/birthday-paper-3d.js?v=straight-hair-5';
         script.async = true;
         script.onload = () => window.BirthdayPaper3D ? resolve(window.BirthdayPaper3D) : reject(new Error('Paper library unavailable'));
         script.onerror = () => reject(new Error('Paper library did not load'));
@@ -261,7 +261,16 @@
       signature.gap = Number.parseFloat(getComputedStyle(backFace.querySelector('.back-signature')).marginTop) || 0;
       const image = frontFace.querySelector('.note-paper');
       const blossom = frontFace.querySelector('.note-blossom');
+      const backWriting = backFace.querySelector('.note-writing--back');
       return { id: trigger.dataset.noteId, src: image.currentSrc || image.src, width: flight.offsetWidth,
+        // New folded paper has an inset frame and lower seal; use the same safe
+        // area in the physical texture as in the readable DOM version.
+        backBounds: scene.dataset.paperStyle === 'folded' ? {
+          left: backWriting.offsetLeft / flight.offsetWidth,
+          top: backWriting.offsetTop / flight.offsetHeight,
+          width: backWriting.clientWidth / flight.offsetWidth,
+          height: backWriting.clientHeight / flight.offsetHeight,
+        } : null,
         tint: getComputedStyle(trigger).getPropertyValue('--note-tint').trim() || 'none',
         front: writingData(frontText, true), caption: writingData(frontSmall, true),
         back: writingData(backText), eyebrow: writingData(backFace.querySelector('.back-eyebrow')), signature,
