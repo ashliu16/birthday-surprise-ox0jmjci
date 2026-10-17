@@ -1,0 +1,5 @@
+.collection-bloom { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.collection-bloom > * { position:absolute; object-fit:contain; pointer-events:none; will-change:transform,opacity; }
+.collection-flower { filter:drop-shadow(0 1px 2px #ad543825); }
+.collection-glint { border-radius:50%; background:#c8a36b; box-shadow:0 0 8px 2px #d4b88850; }
+.is-collecting .note-actions { pointer-events:none; }
