@@ -9,6 +9,14 @@
   transform-origin: 50% 0;
 }
 .letter-notes .note-slot:focus-within { animation-play-state: paused; }
+.letter-notes .note-trigger > .paper-note {
+  transform: perspective(420px) rotateY(var(--yaw, 0deg));
+  animation: plum-note-yaw var(--duration) var(--ease-breeze) var(--delay) infinite;
+}
+.letter-notes .note-slot:focus-within .paper-note,
+.letter-notes .scene.is-breeze-paused .note-trigger > .paper-note {
+  animation-play-state: paused;
+}
 .letter-notes .note-label { color: #a64c3b; }
 .letter-notes .note-paper { object-fit: fill; }
 .letter-notes .note-back .note-paper { transform: scaleX(-1); }
@@ -19,11 +27,21 @@
 .letter-notes .note-back-text { font-size: clamp(12px, calc(var(--note-width)*.09), 16px); }
 .letter-notes .back-eyebrow,
 .letter-notes .back-signature { height: 8px; margin: 0; font-size: 8px; line-height: 1; }
+/* No gesture caption: center the paper and its single collection action. */
+.letter-notes .note-stage { grid-template-rows: auto auto; }
+.letter-notes #note-dialog[data-layout="landscape"] .note-stage { grid-template-rows: auto; }
+.letter-notes #note-dialog[data-layout="landscape"] #note-flight { grid-row: 1; }
+.letter-notes #note-dialog[data-layout="landscape"] .note-actions { grid-row: 1; align-self: center; }
 
 @keyframes plum-note-sway {
   0%, 100% { transform: translateX(-50%) rotate(calc(var(--angle) - var(--sway))); }
   50% { transform: translateX(-50%) rotate(calc(var(--angle) + var(--sway))); }
 }
+@keyframes plum-note-yaw {
+  0%, 100% { transform: perspective(420px) rotateY(calc(var(--yaw) - 3deg)); }
+  50% { transform: perspective(420px) rotateY(calc(var(--yaw) + 3deg)); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .letter-notes .note-slot { animation: none; }
+  .letter-notes .note-slot,
+  .letter-notes .note-trigger > .paper-note { animation: none; }
 }

@@ -17,7 +17,7 @@
     const dimmer = document.getElementById('note-dimmer');
     const count = document.getElementById('note-count');
     const physicalHost = document.getElementById('note-physical');
-    if (!grid || !dialog || !flight || !flipper || !noteTemplate || !closeButton || !hint) return;
+    if (!grid || !dialog || !flight || !flipper || !noteTemplate || !closeButton) return;
 
     const triggers = [...grid.querySelectorAll('button.note-trigger[data-note-id]')];
     const messages = [
@@ -411,7 +411,7 @@
       flipper.classList.toggle('is-flipped', back);
       frontFace?.setAttribute('aria-hidden', String(back));
       backFace?.setAttribute('aria-hidden', String(!back));
-      dialog.setAttribute('aria-describedby', `${back ? 'note-back-text' : 'note-front-text'} note-gesture-hint`);
+      dialog.setAttribute('aria-describedby', `${back ? 'note-back-text' : 'note-front-text'}${hint ? ' note-gesture-hint' : ''}`);
     }
 
     function renderRotation() {
@@ -429,7 +429,7 @@
       angularVelocity = 0;
       renderRotation();
       exposeFace(isBack(target));
-      hint.textContent = isBack(target) ? '再拖一下纸条，回到正面' : '左右拖动纸条，翻到背面';
+      if (hint) hint.textContent = isBack(target) ? '再拖一下纸条，回到正面' : '左右拖动纸条，翻到背面';
       flipper.style.willChange = '';
     }
 
@@ -594,6 +594,10 @@
       const matrix = transform.match(/^matrix(?:3d)?\(([^)]+)\)$/)?.[1].split(',').map(Number);
       const swayAngle = matrix ? Math.atan2(matrix[1], matrix[0]) * 180 / Math.PI : 0;
       const angle = matrix ? swayAngle : (Number.parseFloat(trigger.dataset.angle || '0') || 0);
+      // Preserve the small hanging paper's current side turn during extraction.
+      // Its cord and pendulum stay in their own 2D coordinate system.
+      const paperMatrix = getComputedStyle(sourcePaper).transform.match(/^matrix3d\(([^)]+)\)$/)?.[1].split(',').map(Number);
+      const yaw = paperMatrix ? Math.atan2(-paperMatrix[2], paperMatrix[0]) * 180 / Math.PI : 0;
       const [front] = messageById.get(trigger.dataset.noteId);
       activeTrigger = trigger;
       originalVisibility = trigger.style.visibility;
@@ -649,7 +653,8 @@
       const dy = sourceRect.top + sourceRect.height / 2 - centerRect.top - centerRect.height / 2;
       const sx = sourceWidth / (flight.offsetWidth || centerRect.width || 1);
       const sy = sourceHeight / (flight.offsetHeight || centerRect.height || 1);
-      sourceTransform = `translate3d(${dx}px, ${dy}px, 0) rotate(${angle}deg) scale(${sx}, ${sy})`;
+      const sideTurn = paperMatrix ? ` perspective(${420 * sceneScale}px) rotateY(${yaw}deg)` : '';
+      sourceTransform = `translate3d(${dx}px, ${dy}px, 0) rotate(${angle}deg)${sideTurn} scale(${sx}, ${sy})`;
       flight.style.transform = physicalWanted ? sourceTransform : 'none';
       trigger.style.visibility = 'hidden';
       trigger.setAttribute('aria-expanded', 'true');
