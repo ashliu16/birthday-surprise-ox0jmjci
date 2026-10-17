@@ -11,13 +11,14 @@
         "height": 1536,
         "anchorX": 593.155,
         "anchorY": 1428,
-        "scale": 0.26301647,
+        "scale": 0.26367041,
         "bounds": [
             358,
             93,
             851,
             1429
         ],
+        "crownY": 93,
         "flipX": true
     },
     "idle-right": {
@@ -26,13 +27,14 @@
         "height": 1536,
         "anchorX": 593.155,
         "anchorY": 1428,
-        "scale": 0.26301647,
+        "scale": 0.26367041,
         "bounds": [
             358,
             93,
             851,
             1429
         ],
+        "crownY": 93,
         "flipX": false
     },
     "peek": {
@@ -41,13 +43,14 @@
         "height": 1600,
         "anchorX": 864.3,
         "anchorY": 1538,
-        "scale": 0.24920549,
+        "scale": 0.256,
         "bounds": [
             652,
             163,
             983,
             1539
         ],
+        "crownY": 163,
         "gripX": 983
     },
     "finished": {
@@ -56,13 +59,14 @@
         "height": 1536,
         "anchorX": 517,
         "anchorY": 1498,
-        "scale": 0.23828125,
+        "scale": 0.24546722,
         "bounds": [
             256,
             10,
             852,
             1498
-        ]
+        ],
+        "crownY": 64
     },
     "walk-a": {
         "src": "assets/straight-hair/walk-a.webp",
@@ -70,13 +74,14 @@
         "height": 1537,
         "anchorX": 502.024,
         "anchorY": 1354,
-        "scale": 0.30639432,
+        "scale": 0.31288889,
         "bounds": [
             203,
             229,
             787,
             1355
-        ]
+        ],
+        "crownY": 229
     },
     "walk-b": {
         "src": "assets/straight-hair/walk-b.webp",
@@ -84,13 +89,14 @@
         "height": 1536,
         "anchorX": 502.762,
         "anchorY": 1370,
-        "scale": 0.29584775,
+        "scale": 0.3047619,
         "bounds": [
             258,
             215,
             772,
             1371
-        ]
+        ],
+        "crownY": 215
     },
     "reach-left": {
         "src": "assets/straight-hair/reach-left.webp",
@@ -98,13 +104,14 @@
         "height": 1537,
         "anchorX": 554.055,
         "anchorY": 1377,
-        "scale": 0.30528,
+        "scale": 0.3079615,
         "bounds": [
             224,
             128,
             726,
             1378
         ],
+        "crownY": 234,
         "handX": 252,
         "handY": 128
     },
@@ -114,13 +121,14 @@
         "height": 1536,
         "anchorX": 570.684,
         "anchorY": 1435,
-        "scale": 0.2933439,
+        "scale": 0.29260183,
         "bounds": [
             245,
             174,
             796,
             1436
         ],
+        "crownY": 232,
         "handX": 273,
         "handY": 174
     },
@@ -130,13 +138,14 @@
         "height": 1537,
         "anchorX": 543.479,
         "anchorY": 1421,
-        "scale": 0.30556414,
+        "scale": 0.30188679,
         "bounds": [
             310,
             128,
             773,
             1422
         ],
+        "crownY": 255,
         "handX": 739,
         "handY": 128
     },
@@ -146,13 +155,14 @@
         "height": 1536,
         "anchorX": 530.69,
         "anchorY": 1424,
-        "scale": 0.28989247,
+        "scale": 0.28947368,
         "bounds": [
             218,
             30,
             814,
             1425
         ],
+        "crownY": 208,
         "handX": 248,
         "handY": 30
     },
@@ -162,13 +172,14 @@
         "height": 1536,
         "anchorX": 530.11,
         "anchorY": 1392,
-        "scale": 0.29713446,
+        "scale": 0.30529055,
         "bounds": [
             228,
             32,
             816,
             1393
         ],
+        "crownY": 239,
         "handX": 784,
         "handY": 32
     }
@@ -581,7 +592,8 @@
     }
     function tick(now) {
       if(failed)return;
-      if(lastTime!==null)seconds+=Math.min((now-lastTime)/1000,.05);
+      // Visibility changes pause the clock; slow frames keep the same period.
+      if(lastTime!==null)seconds+=(now-lastTime)/1000;
       lastTime=now;draw();raf=requestAnimationFrame(tick);
     }
     function stop() {cancelAnimationFrame(raf);raf=0;lastTime=null;}
