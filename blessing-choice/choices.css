@@ -1,6 +1,6 @@
 @font-face {
   font-family: BlessingHand;
-  src: url('blessing-hand.woff2?v=blessing-choice-1') format('woff2');
+  src: url('blessing-hand.woff2?v=blessing-choice-2') format('woff2');
   font-display: swap;
 }
 .letter-notes { --hand: BlessingHand, KaiTi, STKaiti, serif; }
