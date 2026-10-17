@@ -6,7 +6,7 @@
   const SCALE = .60;
   const POSES = {
     "idle-left": {
-        "src": "assets/straight-hair/idle.webp",
+        "src": "assets/straight-hair/face-match-v5/idle.webp",
         "width": 1024,
         "height": 1536,
         "anchorX": 593.155,
@@ -22,7 +22,7 @@
         "flipX": true
     },
     "idle-right": {
-        "src": "assets/straight-hair/idle.webp",
+        "src": "assets/straight-hair/face-match-v5/idle.webp",
         "width": 1024,
         "height": 1536,
         "anchorX": 593.155,
@@ -69,7 +69,7 @@
         "crownY": 64
     },
     "walk-a": {
-        "src": "assets/straight-hair/walk-a.webp",
+        "src": "assets/straight-hair/face-match-v5/walk-a.webp",
         "width": 1023,
         "height": 1537,
         "anchorX": 502.024,
@@ -84,7 +84,7 @@
         "crownY": 229
     },
     "walk-b": {
-        "src": "assets/straight-hair/walk-b.webp",
+        "src": "assets/straight-hair/face-match-v5/walk-b.webp",
         "width": 1024,
         "height": 1536,
         "anchorX": 502.762,
@@ -99,7 +99,7 @@
         "crownY": 215
     },
     "reach-left": {
-        "src": "assets/straight-hair/reach-left.webp",
+        "src": "assets/straight-hair/face-match-v5/reach-left.webp",
         "width": 1023,
         "height": 1537,
         "anchorX": 554.055,
@@ -116,7 +116,7 @@
         "handY": 128
     },
     "reach-low": {
-        "src": "assets/straight-hair/reach-low.webp",
+        "src": "assets/straight-hair/face-match-v5/reach-low.webp",
         "width": 1024,
         "height": 1536,
         "anchorX": 570.684,
@@ -133,7 +133,7 @@
         "handY": 174
     },
     "reach-right": {
-        "src": "assets/straight-hair/reach-right.webp",
+        "src": "assets/straight-hair/face-match-v5/reach-right.webp",
         "width": 1023,
         "height": 1537,
         "anchorX": 543.479,
@@ -150,7 +150,7 @@
         "handY": 128
     },
     "tiptoe-left": {
-        "src": "assets/straight-hair/tiptoe-left.webp",
+        "src": "assets/straight-hair/face-match-v5/tiptoe-left.webp",
         "width": 1024,
         "height": 1536,
         "anchorX": 530.69,
@@ -167,7 +167,7 @@
         "handY": 30
     },
     "tiptoe-right": {
-        "src": "assets/straight-hair/tiptoe-right.webp",
+        "src": "assets/straight-hair/face-match-v5/tiptoe-right.webp",
         "width": 1024,
         "height": 1536,
         "anchorX": 530.11,

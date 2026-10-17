@@ -1,9 +1,19 @@
 @font-face {
   font-family: BlessingHand;
-  src: url('blessing-hand.woff2?v=blessing-choice-4') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  src: url('blessing-hand.woff2?v=blessing-choice-5') format('woff2');
   font-display: swap;
 }
 .letter-notes { --hand: BlessingHand, KaiTi, STKaiti, serif; }
+/* Give every branch title the same readable size, including dense glyphs
+   such as 漂. The old inset made narrow tags shrink to 12.25px. */
+.letter-notes .note-trigger .paper-note { --title-size:14px; transform-style:flat; }
+.letter-notes .note-trigger .note-writing--front { inset:18% 10% 12%; }
+/* Branch previews only show the front; the reader mounts both faces. */
+.letter-notes .note-trigger .note-back { display:none; }
+.letter-notes .note-trigger .note-front { transform:none; }
+.letter-notes .note-label,.letter-notes .note-back-text { font-family:var(--hand); font-weight:400; font-style:normal; font-synthesis:none; }
 .letter-notes .note-label { flex-direction:row-reverse; align-items:flex-start; justify-content:center; gap:.38em; }
 .letter-notes .note-column { display:flex; flex-direction:column; align-items:center; flex:none; width:1.12em; }
 .letter-notes .note-glyph { height:1.22em; }
