@@ -6,36 +6,36 @@
   const SCALE = .60;
   const POSES = {
     "idle-left": {
-        "src": "assets/straight-hair/face-match-v5/idle.webp",
+        "src": "assets/straight-hair/idle-from-walk-v6.webp",
         "width": 1024,
         "height": 1536,
-        "anchorX": 593.155,
-        "anchorY": 1428,
-        "scale": 0.26367041,
+        "anchorX": 502.762,
+        "anchorY": 1372,
+        "scale": 0.30423509,
         "bounds": [
-            358,
-            93,
-            851,
-            1429
+            349,
+            215,
+            737,
+            1373
         ],
-        "crownY": 93,
-        "flipX": true
+        "crownY": 215,
+        "flipX": false
     },
     "idle-right": {
-        "src": "assets/straight-hair/face-match-v5/idle.webp",
+        "src": "assets/straight-hair/idle-from-walk-v6.webp",
         "width": 1024,
         "height": 1536,
-        "anchorX": 593.155,
-        "anchorY": 1428,
-        "scale": 0.26367041,
+        "anchorX": 502.762,
+        "anchorY": 1372,
+        "scale": 0.30423509,
         "bounds": [
-            358,
-            93,
-            851,
-            1429
+            349,
+            215,
+            737,
+            1373
         ],
-        "crownY": 93,
-        "flipX": false
+        "crownY": 215,
+        "flipX": true
     },
     "peek": {
         "src": "assets/straight-hair/peek.webp",

@@ -2,7 +2,7 @@
   font-family: BlessingHand;
   font-style: normal;
   font-weight: 400;
-  src: url('blessing-hand.woff2?v=blessing-choice-5') format('woff2');
+  src: url('blessing-hand.woff2?v=blessing-choice-6') format('woff2');
   font-display: swap;
 }
 .letter-notes { --hand: BlessingHand, KaiTi, STKaiti, serif; }
