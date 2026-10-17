@@ -1,0 +1,84 @@
+/* Two paper extensions fold over a stationary middle panel. No cover lettering. */
+.greeting-card {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  isolation: isolate;
+  --card-open-duration: 1200ms;
+}
+.greeting-flap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background-color: #f6f1e8;
+  background-image:
+    repeating-linear-gradient(97deg, #8b785a03 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(7deg, #fff8ed18 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at 35% 24%, #fffdf8b3, transparent 80%);
+  transform: rotateY(0deg);
+  transition: transform var(--card-open-duration) var(--ease-in-out);
+  /* Both sides are the same stock; keep the reverse visible past 90 degrees. */
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+}
+.greeting-flap::before,
+.greeting-flap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.greeting-flap--left {
+  left: 0;
+  transform-origin: left center;
+  border-right: 1px solid #cbbda966;
+  box-shadow: 2px 0 5px #68533817;
+}
+.greeting-flap--right {
+  right: 0;
+  transform-origin: right center;
+  border-left: 1px solid #fffdf9;
+  box-shadow: -1px 0 2px #6853380d;
+}
+/* A shallow lift along the meeting edges suggests paper, without extra symbols. */
+.greeting-flap--left::before {
+  background: linear-gradient(90deg, #8f78530b, transparent 12%, transparent 90%, #fffdf980 99%, #bca88a20);
+}
+.greeting-flap--right::before {
+  background: linear-gradient(90deg, #bca88a25, #fffdf980 1%, transparent 10%, transparent 88%, #8f78530b);
+}
+.greeting-flap::after {
+  background: linear-gradient(#7b654208, transparent 22px, transparent calc(100% - 22px), #7b65420a);
+}
+.greeting-open {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  touch-action: manipulation;
+}
+.greeting-open:focus-visible {
+  outline: 1px solid #a54e40;
+  outline-offset: -12px;
+}
+.scene[data-card-state="opening"] .greeting-flap { will-change: transform; }
+.scene[data-card-state="opening"] .greeting-flap--left { transform: rotateY(-110deg); }
+.scene[data-card-state="opening"] .greeting-flap--right { transform: rotateY(110deg); }
+.scene[data-card-state="closed"] .scene-art,
+.scene[data-card-state="opening"] .scene-art { pointer-events: none; }
+.scene[data-card-state="closed"] .scene-art *,
+.scene[data-card-state="opening"] .scene-art * { animation-play-state: paused !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .greeting-card { transition: opacity 180ms linear; }
+  .greeting-flap { transition: none; }
+  .scene[data-card-state="opening"] .greeting-flap { transform: none; }
+  .scene[data-card-state="opening"] .greeting-card { opacity: 0; }
+}

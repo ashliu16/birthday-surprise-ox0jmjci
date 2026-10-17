@@ -11,12 +11,14 @@
   <link rel="icon" href="data:,">
   <link rel="preload" as="font" href="assets/birthday-hand-v12.woff2" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css?v=shengchen-20">
+  <link rel="stylesheet" href="greeting-card.css?v=straight-hair-4">
   <script src="character-straight.js?v=straight-hair-3" defer></script>
   <script src="script.js?v=shengchen-20" defer></script>
+  <script src="greeting-card.js?v=straight-hair-4" defer></script>
 </head>
 <body>
-  <main class="scene" aria-label="树枝头的生辰笺">
-    <div class="scene-art" id="scene-art">
+  <main class="scene" data-card-state="closed" aria-label="树枝头的生辰笺">
+    <div class="scene-art" id="scene-art" inert aria-hidden="true">
       <img class="scene-background" src="assets/plum-branch-v18.webp" width="1916" height="821" alt="一枝朱砂红梅从左侧自然伸入，枝杈错落，生辰笺悬于枝间" fetchpriority="high" decoding="async">
       <div id="note-grid" class="note-grid" aria-label="八张藏着惊喜的生辰笺">
       <div class="note-slot note-slot--1" style="--x:28px;--y:61px;--cord:36px;--tag-width:26px;--angle:-5deg;--duration:6.63s;--delay:-0.73s">
@@ -60,7 +62,13 @@
         <p class="scene-hint" id="scene-hint">点开纸笺，拖动翻面</p>
       </div>
     </div>
+    <div class="greeting-card" id="greeting-card">
+      <div class="greeting-flap greeting-flap--left" aria-hidden="true"></div>
+      <div class="greeting-flap greeting-flap--right" aria-hidden="true"></div>
+      <button class="greeting-open" id="greeting-open" type="button" aria-label="打开贺卡" aria-controls="scene-art" aria-expanded="false"></button>
+    </div>
     <span id="note-count" class="visually-hidden" role="status" aria-live="polite"></span>
+    <noscript><style>.greeting-card{display:none}</style></noscript>
     <noscript><p class="no-script-wish">请启用 JavaScript 后，点开枝头纸笺。</p></noscript>
   </main>
   <template id="paper-note-template">
