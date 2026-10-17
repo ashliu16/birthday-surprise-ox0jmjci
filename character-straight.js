@@ -513,7 +513,7 @@
           return;
         }
         float breeze = 0.5 - 0.5*cos(u_time*0.5235987756);
-        float angle = -0.0104719755*breeze;
+        float angle = 0.1047197551*breeze;
         float head = (1.0-smoothstep(300.0,370.0,p.y)) * smoothstep(340.0,385.0,p.x)
           * (1.0-smoothstep(630.0,655.0,p.x));
         vec2 neck = vec2(514.0,334.0);
@@ -521,6 +521,7 @@
         vec2 tilted = vec2(cos(angle)*d.x-sin(angle)*d.y,
                           sin(angle)*d.x+cos(angle)*d.y);
         vec2 offset = (tilted-d)*head;
+        offset.y += 8.0*breeze*head;
         float hair = smoothstep(623.0,641.0,p.x)*(1.0-smoothstep(665.0,680.0,p.x))
           * smoothstep(390.0,500.0,p.y)*(1.0-smoothstep(610.0,635.0,p.y));
         offset.x -= 10.0*breeze*hair;
